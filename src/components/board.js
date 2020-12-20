@@ -16,7 +16,7 @@ class Board extends Component {
             game_state: this.newGame
         };
 
-        this.checkIfValidMove = this.checkIfValidMove.bind(this);
+        //this.getValidMoves = this.getValidMoves.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.newGame = this.newGame.bind(this);
         this.getRow = this.getRow.bind(this);
@@ -71,7 +71,7 @@ class Board extends Component {
             
     // To console.log state
     consoleLog() {
-        console.log(this.state.clicked_square);
+        console.log(this.state.valid_moves);
     }
 
     getRow(num) {
@@ -124,13 +124,18 @@ class Board extends Component {
         // If no pawn has been chosen in previou click, choose a pawn
         if (this.state.clicked_square === null && value !== '') {
         // Set clicked_square in state
+        // Set valid next moves in state
+            console.log('jakob1');
             this.setState({
-                clicked_square: [coor_x, coor_y]
-            });            
+                clicked_square: [coor_x, coor_y],
+                valid_moves: this.getValidMoves(coor_x, coor_y, value)
+            }); 
+
         }
         
         // If pawn was already previously chosen, make a move
-        if (this.state.clicked_square !== null) {
+        else if (this.state.clicked_square !== null) {
+
             // Get coor of previously chosen pawn
             let pawn_x = this.state.clicked_square[0];
             let pawn_y = this.state.clicked_square[1];
@@ -143,186 +148,129 @@ class Board extends Component {
             // if chosen pawn and clicked pawn are same color
             if (value[0] === pawn[0]) {
                 this.setState({
-                    clicked_square: [coor_x, coor_y]
+                    clicked_square: [coor_x, coor_y],
+                    valid_moves: this.getValidMoves(coor_x, coor_y, value)
                 });
             }
-            // if clicked quare is empty, make a move
-            else {
-                if (this.checkIfValidMove(coor_x, coor_y, pawn_x, pawn_y, pawn)) {
-                    console.log('move valid');
-                    
-                    game_state[pawn_y][pawn_x] = '';
-                    game_state[coor_y][coor_x] = pawn;
-                    this.setState({
-                        game_state: game_state,
-                        clicked_square: null
-                    });                          
-                } else {
-                    console.log('move not valid')
-                }    
-
+            // if move is valid, make the move
+            if (check_if_valid_move(coor_x, coor_y, this.state.valid_moves)) {
+                game_state[coor_y][coor_x] = pawn;
+                game_state[pawn_y][pawn_x] = ""
+                this.setState({
+                    game_state: game_state,
+                    clicked_square: null
+                });
+            } else {
+                console.log('move not valid');
+                console.log('move: ', coor_x, coor_y);
             }
-        
+
         }
     }
-    checkIfValidMove(x, y, pawn_x, pawn_y, pawn) {
-        /*
-        each pawn has different valid moves
-        1. check what pawn it is
-        2. check for possible moves
-        */
-        // Get game state
+    
+    getValidMoves(x, y, pawn) {
+        let valid_moves = [];
         const game_state = this.state.game_state;
 
-        console.log('pawn: ', pawn);
-        // For pawns
         if (pawn[1] === 'P') {
-
             // White pawn
             if (pawn[0] === 'w') {
-                if (x === pawn_x) {
-                    let y_dif = y - pawn_y;
-                    if (y_dif === -1) {
-                        // Check if there is a pawn infront
-                        if (game_state[y][x] === '') {
-                            return true;
-                        }
-                        return false;
-                    }
-                    // Can move 2 squares forward
-                    // If in starting position
-                    if (pawn_y === 6 && y_dif === -2) {
-                        return true;
-                    }
-                    return false;
-                }
-
-                // To eat opponent's pawns
-                // Get value on what is on the squares where a pwn can eat
-                if (y === (pawn_y - 1)) {
-                    if (x === pawn_x - 1 || x === pawn_x + 1) {
-                        // Now check if there is a black pawn there
-                        let left = game_state[pawn_y - 1][pawn_x - 1];
-                        let right = game_state[pawn_y - 1][pawn_x + 1];
-
-                        if (pawn_x === 0) {
-                            if (right[0] === 'b') {
-                                return true;
-                            } 
-                        }
-                        if (pawn_x === 7) {
-                            if (left[0] === 'b') {
-                                return true;
-                            }
-                        } else {
-                            if (left[0] === 'b' || right[0] === 'b') {
-                                return true;
-                            }
-                        }
+                if (y === 6) {
+                    console.log(game_state[y - 2][x]);
+                    if (game_state[y - 2][x] === '') {
+                        valid_moves.push([x, y - 2]);
                     }
                 }
-                return false;
-
+                if (game_state[y - 1][x] === '') {
+                    valid_moves.push([x, y - 1]);
+                }
+                if (x !== 0 && game_state[y - 1][x - 1][0] === 'b') {
+                    valid_moves.push([x - 1, y - 1]);
+                }
+                if (x !== 7 && game_state[y - 1][x + 1][0] === 'b') {
+                    valid_moves.push([x + 1, y - 1]);
+                }
             }
-            // Black pawn
-            if (pawn[0] === 'b') {
-                if (x === pawn_x) {
-                    let y_dif = y - pawn_y;
-                    if (y_dif === 1) {
-                        // Check if there is a pawn infront
-                        if (game_state[y][x] === '') {
-                            return true;
-                        }
-                        return false;
-                    }
-                    // Can move 2 squares forward
-                    // If in starting position
-                    if (pawn_y === 1 && y_dif === 2) {
-                        return true;
-                    }
-                    return false;
-                }
-                // To eat opponent's pawns
-                // Get value on what is on the squares where a pwn can eat
-                if (y === (pawn_y + 1)) {
-                    if (x === pawn_x - 1 || x === pawn_x + 1) {
-                        // Now check if there is a white pawn there
-                        let left = game_state[pawn_y + 1][pawn_x - 1];
-                        let right = game_state[pawn_y + 1][pawn_x + 1];
-
-                        if (pawn_x === 0) {
-                            if (right[0] === 'w') {
-                                return true;
-                            } 
-                        }
-                        if (pawn_x === 7) {
-                            if (left[0] === 'w') {
-                                return true;
-                            }
-                        } else {
-                            if (left[0] === 'w' || right[0] === 'w') {
-                                return true;
-                            }
-                        }
+            else if (pawn[0] === 'b') {
+                if (y === 1) {
+                    if (game_state[y + 2][x] === '') {
+                        valid_moves.push([x, y + 2]);
                     }
                 }
-                return false;
+                if (game_state[y + 1][x] === '') {
+                    valid_moves.push([x, y + 1]);
+                }
+                if (x !== 0 && game_state[y + 1][x - 1][0] === 'w') {
+                    valid_moves.push([x - 1, y + 1]);
+                }
+                if (x !== 7 && game_state[y + 1][x + 1][0] === 'w') {
+                    valid_moves.push([x + 1, y + 1]);
+                }
             }
         }
-        // For rooks
-        if (pawn[1] === 'R') {
-
-            // Can not jump other pawns
-            // only change y or only change x
-
-            // When going along x axis.
-            if (x !== pawn_x && y === pawn_y) {
-                console.log('jakobx')
-                // Get absolute value of path.length
-                let temp = pawn_x - x;
-                if (temp > 0) {
-                    console.log('jakob1')
-                    for (let i = 1; i <= Math.abs(temp) - 1; i++) {
-                        if (game_state[pawn_y][pawn_x - i] !== '') {
-                            return false;
-                        }
+        else if (pawn[1] === 'R') {
+            let i = 1;
+            while (true) {
+                if (x + i > 7) {break;}
+                if (game_state[y][x + i] !== '') {
+                    let pawn2 = game_state[y][x + i];
+                    if(pawn2 === undefined) {break;}
+                    if (pawn2[0] !== pawn[0]) {
+                        valid_moves.push([x + i, y]);
                     }
-                    return true;
-                } else if (temp < 0) {
-                    console.log('jakob2')
-                    for (let i = 1; i <= Math.abs(temp) - 1; i++) {
-                        if (game_state[pawn_y][pawn_x + i] !== '') {
-                            return false;
-                        }
-                    }
-                    console.log('jakob3')
-                    return true;
+                    break
                 }
+                valid_moves.push([x + i, y]);
+                i += 1;
             }
-
-            // Going down y axis
-            if (y !== pawn_y && x === pawn_x) {
-                // Get absolute value of path.length
-                let temp = pawn_y - y;
-                if (temp > 0) {
-                    for (let i = 1; i <= Math.abs(temp) - 1; i++) {
-                        if (game_state[pawn_y - i][pawn_x] !== '') {
-                            return false;
-                        }
+            i = 1;
+            while (true) {
+                if (x - i < 0) {break;}
+                if (game_state[y][x - i] !== '') {
+                    let pawn2 = game_state[y][x - i];
+                    if (pawn2 === undefined) {break;}
+                    if (pawn2[0] !== pawn[0]) {
+                        valid_moves.push([x - i, y]);
                     }
-                    return true;
-                } else if (temp < 0) {
-                    for (let i = 1; i <= Math.abs(temp) - 1; i++) {
-                        if (game_state[pawn_y + i][pawn_x] !== '') {
-                            return false;
-                        }
-                    }
-                    return true;
+                    break
                 }
+                valid_moves.push([x - i, y]);
+                i += 1;
             }
-            return false;
-        }
-        
+            i = 1;
+            while (true) {
+                if (y + i > 7) {break;}
+                if (game_state[y + i][x] !== '') {
+                    let pawn2 = game_state[y + i][x];
+                    if (pawn2 === undefined) {break;}
+                    if (pawn2[0] !== pawn[0]) {
+                        valid_moves.push([x, y + i]);
+                    }
+                    break
+                }
+                valid_moves.push([x, y + i]);
+                i += 1;
+            }
+            i = 1;
+            while (true) {
+                if (y - i < 0) {break;}
+                if (game_state[y - i][x] !== '') {
+                    let pawn2 = game_state[y - i][x];
+                    if (pawn2 === undefined) {break;}
+                    if (pawn2[0] !== pawn[0]) {
+                        valid_moves.push([x, y - i]);
+                    }
+                    break
+                }
+                valid_moves.push([x, y - i]);
+                i += 1;
+            }
+        } /*
+        else if (pawn[0] === 'Kn') {
+            
+        } */
+        console.log(valid_moves);
+        return valid_moves;
     }
 
     render() {
@@ -351,6 +299,15 @@ class Board extends Component {
             </div>
         );
     }
+}
+
+function check_if_valid_move(x, y, valid_moves) {
+    for(let i = 0; i <= valid_moves.length - 1; i++) {
+        if (valid_moves[i][0] === x && valid_moves[i][1] === y) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export default Board;
