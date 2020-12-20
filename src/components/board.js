@@ -13,7 +13,7 @@ class Board extends Component {
 
         this.state = {
             clicked_square: null,
-            game_state: this.newGame
+            game_state: null,
         };
 
         //this.getValidMoves = this.getValidMoves.bind(this);
@@ -24,6 +24,7 @@ class Board extends Component {
         this.getSquareValue = this.getSquareValue.bind(this);
         this.consoleLog = this.consoleLog.bind(this);
     }
+
     UNSAFE_componentWillMount() {
         this.newGame();
     }
@@ -71,7 +72,7 @@ class Board extends Component {
             
     // To console.log state
     consoleLog() {
-        console.log(this.state.valid_moves);
+        console.log(this.state.game_state[1][4]);
     }
 
     getRow(num) {
@@ -125,7 +126,6 @@ class Board extends Component {
         if (this.state.clicked_square === null && value !== '') {
         // Set clicked_square in state
         // Set valid next moves in state
-            console.log('jakob1');
             this.setState({
                 clicked_square: [coor_x, coor_y],
                 valid_moves: this.getValidMoves(coor_x, coor_y, value)
@@ -151,18 +151,22 @@ class Board extends Component {
                     clicked_square: [coor_x, coor_y],
                     valid_moves: this.getValidMoves(coor_x, coor_y, value)
                 });
-            }
-            // if move is valid, make the move
-            if (check_if_valid_move(coor_x, coor_y, this.state.valid_moves)) {
-                game_state[coor_y][coor_x] = pawn;
-                game_state[pawn_y][pawn_x] = ""
-                this.setState({
-                    game_state: game_state,
-                    clicked_square: null
-                });
             } else {
-                console.log('move not valid');
-                console.log('move: ', coor_x, coor_y);
+                if (check_if_valid_move(coor_x, coor_y, this.state.valid_moves)) {
+                    game_state[coor_y][coor_x] = pawn;
+                    game_state[pawn_y][pawn_x] = ""
+                    this.setState({
+                        game_state: game_state,
+                        clicked_square: null
+                    });
+                    console.log('move valid');
+                } else {
+                    this.setState({
+                        clicked_square: [coor_x, coor_y],
+                        valid_moves: this.getValidMoves(coor_x, coor_y, value)
+                    });
+                    console.log('move not valid');
+                }
             }
 
         }
@@ -176,7 +180,6 @@ class Board extends Component {
             // White pawn
             if (pawn[0] === 'w') {
                 if (y === 6) {
-                    console.log(game_state[y - 2][x]);
                     if (game_state[y - 2][x] === '') {
                         valid_moves.push([x, y - 2]);
                     }
@@ -208,67 +211,68 @@ class Board extends Component {
                 }
             }
         }
+        // For a rook
         else if (pawn[1] === 'R') {
-            let i = 1;
-            while (true) {
-                if (x + i > 7) {break;}
-                if (game_state[y][x + i] !== '') {
-                    let pawn2 = game_state[y][x + i];
-                    if(pawn2 === undefined) {break;}
-                    if (pawn2[0] !== pawn[0]) {
-                        valid_moves.push([x + i, y]);
-                    }
-                    break
-                }
-                valid_moves.push([x + i, y]);
-                i += 1;
-            }
-            i = 1;
-            while (true) {
-                if (x - i < 0) {break;}
-                if (game_state[y][x - i] !== '') {
-                    let pawn2 = game_state[y][x - i];
-                    if (pawn2 === undefined) {break;}
-                    if (pawn2[0] !== pawn[0]) {
-                        valid_moves.push([x - i, y]);
-                    }
-                    break
-                }
-                valid_moves.push([x - i, y]);
-                i += 1;
-            }
-            i = 1;
-            while (true) {
-                if (y + i > 7) {break;}
-                if (game_state[y + i][x] !== '') {
-                    let pawn2 = game_state[y + i][x];
-                    if (pawn2 === undefined) {break;}
-                    if (pawn2[0] !== pawn[0]) {
-                        valid_moves.push([x, y + i]);
-                    }
-                    break
-                }
-                valid_moves.push([x, y + i]);
-                i += 1;
-            }
-            i = 1;
-            while (true) {
-                if (y - i < 0) {break;}
-                if (game_state[y - i][x] !== '') {
-                    let pawn2 = game_state[y - i][x];
-                    if (pawn2 === undefined) {break;}
-                    if (pawn2[0] !== pawn[0]) {
-                        valid_moves.push([x, y - i]);
-                    }
-                    break
-                }
-                valid_moves.push([x, y - i]);
-                i += 1;
-            }
-        } /*
-        else if (pawn[0] === 'Kn') {
+            valid_moves = rook_valid_moves(x, y, pawn, game_state);
+        }
+        // For knight
+        else if (pawn[1] === 'K' && pawn.length > 2) {
+
+            let pawn_color = pawn[0];
             
-        } */
+            const kn_moves = [
+                [x + 2, y + 1], [x + 2, y - 1], [x - 2, y - 1], [x - 2, y + 1],
+                [x + 1, y - 2], [x - 1, y - 2], [x + 1, y + 2], [x - 1, y + 2]
+            ]
+
+            for (let i = 0; i <= kn_moves.length - 1; i++) {
+                let move = kn_moves[i];
+
+                if (move[0] <= 7 && move[1] <= 7 && move[0] >= 0 && move[1] >= 0) {
+                    if (game_state[move[1]][move[0]] === '') {
+                        valid_moves.push(move);
+                    }
+                    if (game_state[move[1]][move[0]] !== '' && game_state[move[1]][move[0]][0] !== pawn_color) {
+                        valid_moves.push(move);
+                    }
+                }
+            }
+        }
+        else if (pawn[1] === 'K' && pawn.length === 2) {
+            let k_moves = [];
+            let pawn_color = pawn[0];
+            for (let i = 0; i <= 1; i++) {
+                for (let j = 0; j <= 1; j++) {
+                    k_moves.push(
+                        [x + i, y + j],
+                        [x - i, y + j],
+                        [x - i, y - j],
+                        [x + i, y - j]
+                    )
+                }
+            }
+            for (let i = 0; i <= k_moves.length - 1; i++) {
+                let move = k_moves[i];
+                if (move[0] <= 7 && move[1] <= 7 && move[0] >= 0 && move[1] >= 0) {
+                    if (game_state[move[1]][move[0]] === '') {
+                        valid_moves.push(move);
+                    }
+                    if (game_state[move[1]][move[0]] !== '' && game_state[move[1]][move[0]][0] !== pawn_color) {
+                        valid_moves.push(move);
+                    }
+                }
+            }
+        }
+        else if (pawn[1] === 'B') {
+            valid_moves = get_bishop_moves(x, y, pawn, game_state);
+        }
+        // Queen
+        else if (pawn[1] === 'Q') {
+            let pawn_color = pawn[0];
+
+            // First get up, down, left, right; just like rook.
+            valid_moves = rook_valid_moves(x, y, pawn, game_state);
+        }
         console.log(valid_moves);
         return valid_moves;
     }
@@ -278,6 +282,7 @@ class Board extends Component {
 
         return (
             <div className="board">
+                <div className="squares">
                 {board_data.map((row) => {
                     return (
                         <div className="board-row">
@@ -293,14 +298,13 @@ class Board extends Component {
                         </div>
                     );
                 })}
-                <button onClick={() => { this.consoleLog() }}>
-                    log state
-                </button>
+                </div>
             </div>
         );
     }
 }
 
+// Helper functions
 function check_if_valid_move(x, y, valid_moves) {
     for(let i = 0; i <= valid_moves.length - 1; i++) {
         if (valid_moves[i][0] === x && valid_moves[i][1] === y) {
@@ -308,6 +312,129 @@ function check_if_valid_move(x, y, valid_moves) {
         }
     }
     return false;
+}
+
+function rook_valid_moves(x, y, pawn, game_state) {
+    let i = 1;
+    let valid_moves = [];
+    while (true) {
+        if (x + i > 7) {break;}
+        if (game_state[y][x + i] !== '') {
+            let pawn2 = game_state[y][x + i];
+            if(pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x + i, y]);
+            }
+            break
+        }
+        valid_moves.push([x + i, y]);
+        i += 1;
+    }
+    i = 1;
+    while (true) {
+        if (x - i < 0) {break;}
+        if (game_state[y][x - i] !== '') {
+            let pawn2 = game_state[y][x - i];
+            if (pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x - i, y]);
+            }
+            break
+        }
+        valid_moves.push([x - i, y]);
+        i += 1;
+    }
+    i = 1;
+    while (true) {
+        if (y + i > 7) {break;}
+        if (game_state[y + i][x] !== '') {
+            let pawn2 = game_state[y + i][x];
+            if (pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x, y + i]);
+            }
+            break
+        }
+        valid_moves.push([x, y + i]);
+        i += 1;
+    }
+    i = 1;
+    while (true) {
+        if (y - i < 0) {break;}
+        if (game_state[y - i][x] !== '') {
+            let pawn2 = game_state[y - i][x];
+            if (pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x, y - i]);
+            }
+            break
+        }
+        valid_moves.push([x, y - i]);
+        i += 1;
+    }
+    return valid_moves;
+}
+
+function get_bishop_moves(x, y, pawn, game_state) {
+    let i = 1;
+    let valid_moves = [];
+
+    while (true) {
+        if (x + i > 7 || y + i > 7) {break;}
+        if (game_state[y + i][x + i] !== '') {
+            let pawn2 = game_state[y + i][x + i];
+            if(pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x + i, y + i]);
+            }
+            break
+        }
+        valid_moves.push([x + i, y + i]);
+        i += 1;
+    }
+    i = 1;
+    while (true) {
+        if (x - i < 0 || y - i < 0) {break;}
+        if (game_state[y - i][x - i] !== '') {
+            let pawn2 = game_state[y - i][x - i];
+            if (pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x - i, y - i]);
+            }
+            break
+        }
+        valid_moves.push([x - i, y - i]);
+        i += 1;
+    }
+    i = 1;
+    while (true) {
+        if (y + i > 7 || x - i < 0) {break;}
+        if (game_state[y + i][x - i] !== '') {
+            let pawn2 = game_state[y + i][x - i];
+            if (pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x - i, y + i]);
+            }
+            break
+        }
+        valid_moves.push([x - i, y + i]);
+        i += 1;
+    }
+    i = 1;
+    while (true) {
+        if (y - i < 0) {break;}
+        if (game_state[y - i][x + i] !== '') {
+            let pawn2 = game_state[y - i][x + i];
+            if (pawn2 === undefined) {break;}
+            if (pawn2[0] !== pawn[0]) {
+                valid_moves.push([x + i, y - i]);
+            }
+            break
+        }
+        valid_moves.push([x + i, y - i]);
+        i += 1;
+    }
+    return valid_moves;
 }
 
 export default Board;

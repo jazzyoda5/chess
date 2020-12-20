@@ -34,3 +34,8 @@ h1 {
     border: none;
     color: rgb(0, 204, 0);
 }
+.squares {
+    border-style: solid;
+    border-color: rgb(17, 17, 17);
+    border-width: 1px;
+}

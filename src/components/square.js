@@ -87,7 +87,7 @@ class Square extends React.Component {
         <button
           style={{ backgroundImage: 'url(' + this.getBgPng() + ')' }}
           onClick={() => {this.props.handleClick(this.props.tag)} }
-        >{this.props.tag}</button>
+        ></button>
       </div>
     );
   }
