@@ -1,8 +1,51 @@
 body {
-  background-color: rgb(37, 37, 37);
+  background-color: rgb(24, 24, 24);
+  font-family: 'Courier New', Courier, monospace;
+
 }
 .App {
   text-align: center;
 
+}
+.panel {
+  display: flex;
+  justify-content: space-around;
+  width: 500px;
+  margin: auto;
+  background-color: rgb(85, 85, 85);
+  margin-bottom:  3vh;
+  padding: 10px;
+  border-radius: 8px;
+  border-style: solid;
+  border-color: rgb(165, 165, 165);
+  border-width: 1px;
+}
+.panel button {
+  background-color: rgb(48, 48, 48);
+  border-radius: 8px;
+  color: white;
+  border-style: solid;
+  width: 30%;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: large;
+}
+.panel button:hover {
+  background-color: rgb(59, 59, 59);
+}
+.panel button:active,
+.panel button:focus,
+.panel button:active:focus {
+  outline: none;
+  box-shadow: none;
+}
+.panel button:active:focus {
+  background-color: rgb(77, 77, 77);
+}
+.panel p {
+  font-size: 20px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  color: white;
 }
 

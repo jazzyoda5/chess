@@ -34,6 +34,11 @@ h1 {
     border: none;
     color: rgb(0, 204, 0);
 }
+.square button:focus {
+    outline-style: solid;
+    outline-color: white;
+    outline-width: 2px;
+}
 .squares {
     border-style: solid;
     border-color: rgb(17, 17, 17);

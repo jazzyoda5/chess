@@ -14,9 +14,12 @@ class Board extends Component {
         this.state = {
             clicked_square: null,
             game_state: null,
+            next_move: 'White',
+            check: null
         };
 
-        //this.getValidMoves = this.getValidMoves.bind(this);
+        this.checkCheck = this.checkCheck.bind(this);
+        this.getValidMoves = this.getValidMoves.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.newGame = this.newGame.bind(this);
         this.getRow = this.getRow.bind(this);
@@ -66,7 +69,8 @@ class Board extends Component {
 
         // Set new_game as state
         this.setState({
-            game_state: new_game
+            game_state: new_game,
+            next_move: 'White'
         });
     }
             
@@ -122,8 +126,11 @@ class Board extends Component {
         // Get pawn in the square that is clicked
         const value = game_state[coor_y][coor_x]
 
+        // Whose move it is
+        let next_move = this.state.next_move[0].toLowerCase();
+
         // If no pawn has been chosen in previou click, choose a pawn
-        if (this.state.clicked_square === null && value !== '') {
+        if (this.state.clicked_square === null && value !== '' && value[0] === next_move) {
         // Set clicked_square in state
         // Set valid next moves in state
             this.setState({
@@ -152,14 +159,37 @@ class Board extends Component {
                     valid_moves: this.getValidMoves(coor_x, coor_y, value)
                 });
             } else {
+
+                // If move is valid
                 if (check_if_valid_move(coor_x, coor_y, this.state.valid_moves)) {
+                    // Update game state
                     game_state[coor_y][coor_x] = pawn;
                     game_state[pawn_y][pawn_x] = ""
+                    
+                    // figure out next move
+                    if (next_move === 'w') {
+                        // White moved, check check on black
+                        if (this.checkCheck(this.state.game_state, 'w')) {
+                            console.log('check2');
+                        }
+                        next_move = 'Black';
+                    } else {
+
+                        // Black moved, check check on white
+                        if (this.checkCheck(this.state.game_state, 'b')) {
+                            console.log('check1');
+
+                        }
+                        next_move = 'White';
+                    }
                     this.setState({
                         game_state: game_state,
-                        clicked_square: null
+                        clicked_square: null,
+                        next_move: next_move
                     });
                     console.log('move valid');
+
+                // If move is not valid
                 } else {
                     this.setState({
                         clicked_square: [coor_x, coor_y],
@@ -268,19 +298,56 @@ class Board extends Component {
         }
         // Queen
         else if (pawn[1] === 'Q') {
-            let pawn_color = pawn[0];
 
             // First get up, down, left, right; just like rook.
             valid_moves = rook_valid_moves(x, y, pawn, game_state);
+            let b_moves = get_bishop_moves(x, y, pawn, game_state);
+            for (let i = 0; i <= b_moves.length - 1; i++) {
+                valid_moves.push(b_moves[i]);
+            }
         }
-        console.log(valid_moves);
         return valid_moves;
+    }
+    checkCheck(game_state, color) {
+        // Get all valid moves
+        // And see if anyone can eat the opponent's king
+        for (let i = 0; i <= game_state.length - 1; i++) {
+            for (let j = 0; j <= game_state[i].length - 1; j++) {
+
+                let pawn = game_state[i][j];
+
+                if (pawn[0] === color) {
+                    console.log('jakob1');
+                    let valid_moves = this.getValidMoves(j, i, pawn, game_state);
+                    console.log('valid_moves; ', valid_moves);
+                    for (let k = 0; k <= valid_moves.length - 1; k++) {
+                        console.log('jakob2');
+                        if (game_state[valid_moves[k][1]][valid_moves[k][0]] === 'wK') {
+                            console.log('check');
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     render() {
         let board_data = this.getBoardData();
 
         return (
+            <div className="game">
+                <div className="panel">
+                    <button onClick={() => {
+                        this.newGame()
+                    }}>
+                        New Game
+                    </button>
+                    <div className="next-move">
+                        <p>Next Move | {this.state.next_move}</p>
+                    </div>
+                </div>
             <div className="board">
                 <div className="squares">
                 {board_data.map((row) => {
@@ -299,6 +366,7 @@ class Board extends Component {
                     );
                 })}
                 </div>
+            </div>
             </div>
         );
     }
@@ -436,5 +504,10 @@ function get_bishop_moves(x, y, pawn, game_state) {
     }
     return valid_moves;
 }
+
+/*
+function check_if_castling(x, y, pawn, game_state) {
+
+}*/
 
 export default Board;

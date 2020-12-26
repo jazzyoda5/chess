@@ -18,6 +18,11 @@ Black pawns = [
 
 Rules to keep track of:
 
+0. Check
+->
+Get possible moves for all apponoents pieces
+and see if the king is in possible eaten valid moves
+
 1. How pieces move
 2. Castling {
     - If king moves castling is no more possible
