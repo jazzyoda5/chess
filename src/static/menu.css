@@ -1,0 +1,12 @@
+.main-menu {
+    background-color: rgb(85, 85, 85);
+    text-align: center;
+    justify-content: center;
+    width: 80%;
+    margin: auto;
+    padding: 10px;
+    border-radius: 6px;
+    border-style: solid;
+    border-color: rgb(121, 121, 121);
+    border-width: 1px;
+}
