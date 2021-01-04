@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
+import { Button, Typography } from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import "fontsource-roboto";
+import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-
 import "../static/style.css";
-
 import Square from "./square";
 
 const letters = "abcdefgh";
 
-let socket = io.connect("http://localhost:5000/");
+let socket = io.connect("http://localhost:5000");
 
-// 
+// Returns a fresh game_state list
 const newGame = () => {
   let new_game = [];
 
@@ -51,27 +52,52 @@ function Board(props) {
   const [next_move, set_next_move] = useState("White");
   // const [check, set_check] = useState(null);
   const [valid_moves, set_valid_moves] = useState(null);
+  const [connection, set_connection] = useState(false);
+  const [room_id, set_room_id] = useState(null);
+  const [color, set_color] = useState(null);
 
   useEffect(() => {
     // SOCKET
-    socket.on('connect', () => {
-        console.log('[SOCKET] Is connected.')
+    socket.on("connect", () => {
+      console.log("[SOCKET] Is connected.");
+      socket.emit('join');
     });
-    socket.on('move', (JSON_new_state) => {
-        let new_state = JSON.parse(JSON_new_state);
-        console.log('[SOCKET] Recieved new game_state. -> ', new_state);
-        // Set game state
-        set_game_state(new_state);
-        // Set next_move
-        if (next_move === 'White') {
-            set_next_move('Black');
-        } else {
-            set_next_move('White');
-        }
 
+    socket.on('room-data', data => {
+      console.log('[SOCKET] Room Data');
+      let room_id1 = data['room_id'];
+      let color1 = data['color'];
+      set_room_id(room_id1);
+      set_color(color1);
+
+      console.log('room_id: ', room_id);
+      console.log('color: ', color);
     });
+
+    socket.on('full-room', () => {
+      set_connection(true);
+    })
+
+    socket.on('message', data => {
+      console.log(`[SOCKET] Message recieved ${data}`)
+    });
+
+    socket.on("move", (JSON_new_state) => {
+      let new_state = JSON.parse(JSON_new_state);
+      console.log("[SOCKET] Recieved new game_state. -> ", new_state);
+      // Set game state
+      set_game_state(new_state);
+      // Set next_move
+      if (next_move === "White") {
+        set_next_move("Black");
+      } else {
+        set_next_move("White");
+      }
+    });
+
+
     console.log("[USE EFFECT] Complete.");
-  }, []);
+  }, []); 
 
   const getRow = (num) => {
     let row = [];
@@ -125,11 +151,7 @@ function Board(props) {
     let next_move1 = next_move[0].toLowerCase();
 
     // If no pawn has been chosen in previou click, choose a pawn
-    if (
-      clicked_square === null &&
-      value !== "" &&
-      value[0] === next_move1
-    ) {
+    if (clicked_square === null && value !== "" && value[0] === next_move1) {
       // Set clicked_square in state
       // Set valid next moves in state
       set_clicked_square([coor_x, coor_y]);
@@ -177,15 +199,14 @@ function Board(props) {
 
           // emit new game_state through the socket
           let JSON_game_state = JSON.stringify(local_game_state);
-          socket.emit('move', (JSON_game_state));
+          socket.emit("move", JSON_game_state);
 
-          console.log('JSON Game State: ', JSON_game_state);
+          console.log("JSON Game State: ", JSON_game_state);
 
           // If move is not valid
         } else {
           set_clicked_square([coor_x, coor_y]);
           set_valid_moves(getValidMoves(coor_x, coor_y, value));
-
         }
       }
     }
@@ -311,8 +332,7 @@ function Board(props) {
         let pawn = game_state[i][j];
 
         if (pawn[0] === color) {
-
-          let valid_moves = getValidMoves(j, i, pawn, game_state);
+          let valid_moves = getValidMoves(j, i, pawn);
           for (let k = 0; k <= valid_moves.length - 1; k++) {
             if (game_state[valid_moves[k][1]][valid_moves[k][0]] === "wK") {
               return true;
@@ -326,42 +346,64 @@ function Board(props) {
 
   let board_data = getBoardData();
 
-  return (
-    <div className="game">
-      <div className="panel">
-        <button
-          onClick={() => {
-            set_game_state(newGame());
-            set_next_move('White');
-          }}
-        >
-          New Game
-        </button>
-        <div className="next-move">
-          <p>Next Move | {next_move}</p>
+  if (connection === false) {
+    return (
+      <div className="game">
+        <div className="waiting">
+          <Typography variant="h5" component="h5" gutterBottom>
+            Searching for an opponent...
+          </Typography>
+          <CircularProgress mode="indeterminate" color="#ffffff" />
         </div>
       </div>
-      <div className="board">
-        <div className="squares">
-          {board_data.map((row) => {
-            return (
-              <div className="board-row">
-                {row.map((square) => {
-                  return (
-                    <Square
-                      tag={square.tag}
-                      value={getSquareValue(square.tag)}
-                      handleClick={handleClick}
-                    />
-                  );
-                })}
-              </div>
-            );
-          })}
+    );
+  } else {
+    return (
+      <div className="game">
+        <div className="panel">
+          <Button
+            onClick={() => {
+              set_game_state(newGame());
+              set_next_move("White");
+            }}
+            className="panel-but"
+          >
+            New Game
+          </Button>
+          <div className="next-move">
+            <Typography variant="subtitle1">Your color is | {color}</Typography>
+
+            <Typography variant="subtitle1">Next Move | {next_move}</Typography>
+          </div>
+          <Button
+            href="/"
+            className="panel-but"
+          >
+            Exit
+          </Button>
+        </div>
+        <div className="board">
+          <div className="squares">
+            {board_data.map((row) => {
+              return (
+                <div className="board-row">
+                  {row.map((square) => {
+                    return (
+                      <Square
+                        tag={square.tag}
+                        value={getSquareValue(square.tag)}
+                        handleClick={handleClick}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 // Helper functions
