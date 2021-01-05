@@ -12,7 +12,7 @@ body {
   justify-content: space-between;
   width: 500px;
   margin: auto;
-  background-color: rgb(85, 85, 85);
+  background-color: rgb(68, 68, 68);
   margin-bottom:  3vh;
   padding: 10px;
   border-radius: 8px;
@@ -31,13 +31,13 @@ body {
 .panel-but:hover {
   background-color: rgb(59, 59, 59) !important;
 }
-.panel button:active,
-.panel button:focus,
-.panel button:active:focus {
+.panel-but:active,
+.panel-but:focus,
+.panel-but:active:focus {
   outline: none !important;
   box-shadow: none !important;
 }
-.panel button:active:focus {
+.panel-but:active:focus {
   background-color: rgb(77, 77, 77) !important;
 }
 .panel p {

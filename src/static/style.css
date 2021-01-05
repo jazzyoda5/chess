@@ -1,5 +1,5 @@
 .board {
-    background-color: rgb(85, 85, 85);
+    background-color: rgb(68, 68, 68);
     text-align: center;
     justify-content: center;
     width: min-content;
@@ -44,7 +44,7 @@
 .waiting {
     width: 500px;
     margin: auto;
-    background-color: rgb(85, 85, 85);
+    background-color: rgb(68, 68, 68);
     margin-bottom:  3vh;
     padding: 20px;
     padding-bottom: 30px;

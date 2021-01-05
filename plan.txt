@@ -49,3 +49,7 @@ from it's starting position.
 when it reaches the opposite end of the board 
 
 ---
+
+To-Do :
+
+- Fix Exit button style
