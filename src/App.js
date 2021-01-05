@@ -1,8 +1,8 @@
 import "./App.css";
-import { Component, useState } from "react";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Board from "./components/board.js";
 import Menu from "./components/menu.js";
+import OfflineBoard from './components/offline_board.js'
 import "fontsource-roboto";
 import Typography from '@material-ui/core/Typography';
 
@@ -14,6 +14,9 @@ function App(props) {
       </Typography>
       <Router>
         <Switch>
+          <Route path="/offline">
+            <OfflineBoard />
+          </Route>
           <Route path="/online">
             <Board />
           </Route>

@@ -7,46 +7,5 @@ body {
   margin-top: 3vh;
   color: white;
 }
-.panel {
-  display: flex;
-  justify-content: space-between;
-  width: 500px;
-  margin: auto;
-  background-color: rgb(68, 68, 68);
-  margin-bottom:  3vh;
-  padding: 10px;
-  border-radius: 8px;
-  border-style: solid;
-  border-color: rgb(121, 121, 121);
-  border-width: 1px;
-}
-.panel-but {
-  background-color: rgb(48, 48, 48) !important;
-  border-radius: 8px !important;
-  color: white !important;
-  border-style: solid !important;
-  width: 30% !important;
-  font-size: large !important;
-}
-.panel-but:hover {
-  background-color: rgb(59, 59, 59) !important;
-}
-.panel-but:active,
-.panel-but:focus,
-.panel-but:active:focus {
-  outline: none !important;
-  box-shadow: none !important;
-}
-.panel-but:active:focus {
-  background-color: rgb(77, 77, 77) !important;
-}
-.panel p {
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-}
-.next-move {
-  margin:auto;
-}
 
 

@@ -13,7 +13,8 @@ import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import "../static/style.css";
 import Square from "./square";
-import { Link } from "react-router-dom";
+import Panel from './panel.js';
+
 const extras = require("./extras.js");
 
 const letters = "abcdefgh";
@@ -320,32 +321,14 @@ function Board(props) {
             </DialogActions>
           </Dialog>
         </div> : null }
-        <div className="panel">
-          <Button
-            onClick={() => {
-              set_game_state(extras.newGame());
-              set_next_move("White");
-            }}
-            className="panel-but"
-          >
-            New Game
-          </Button>
-          <div className="next-move">
-            <Typography variant="subtitle1">Your color is | {color}</Typography>
-
-            <Typography variant="subtitle1">Next Move | {next_move}</Typography>
-          </div>
-          <Link to="/">
-            <Button
-              onClick={() => {
-                handleExit();
-              }}
-              className="panel-but"
-            >
-              Exit
-            </Button>
-          </Link>
-        </div>
+        <Panel 
+          set_game_state={set_game_state}
+          set_next_move={set_next_move}
+          handleExit={handleExit}
+          color={color}
+          next_move={next_move}
+          online={true}
+        />
         <div className="board">
           <div className="squares">
             {board_data.map((row) => {

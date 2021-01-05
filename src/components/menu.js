@@ -1,7 +1,7 @@
 import React from 'react';
 import '../static/menu.css';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
+import { Link } from 'react-router-dom';
 
 
 function Menu(props) {
@@ -12,8 +12,9 @@ function Menu(props) {
                 <li>
                     <Button
                     variant="contained"
-                    href="#"
                     className="menu-but"
+                    component={Link}
+                    to={'/offline'}
                     >
                         Offline 2-Player Game 
                     </Button>
@@ -21,8 +22,9 @@ function Menu(props) {
                 <li>
                     <Button
                     variant="contained"
-                    href="/online/"
                     className="menu-but"
+                    component={Link}
+                    to={'/online'}
                     >
                         Online Game 
                     </Button>
