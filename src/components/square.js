@@ -16,6 +16,10 @@ function Square(props) {
 
   const getBackgroundColor = () => {
     let tag = props.tag;
+    // If king is checked background chould be red
+    if (props.value[1] === 'K' && props.value.length !== 3 && props.check === props.value[0]) {
+      return 'red';
+    }
     // rows that start with black
     if (tag[1] % 2 !== 0) {
       let b_squares = ["a", "c", "e", "g"];
@@ -71,16 +75,32 @@ function Square(props) {
     }
   };
 
+  const validMoveColor = () => {
+    for (let i = 0; i <= props.validMoves.length - 1; i++) {
+      if (props.validMoves[i] === props.tag) {
+        return 'rgba(54, 54, 54, 0.425)';
+      }
+    }
+    return 'rgba(54, 54, 54, 0)';
+  }
+
+  const tag = props.tag;
   return (
     <div
       className="square"
-      style={{ backgroundColor: getBackgroundColor() }}
+      style={{ 
+        backgroundColor: getBackgroundColor()
+      }}
     >
       <button
-        style={{ backgroundImage: "url(" + getBgPng() + ")" }}
-        onClick={() => {
-          props.handleClick(props.tag);
+        style={{ 
+          backgroundColor: validMoveColor(),
+          backgroundImage: "url(" + getBgPng() + ")",
         }}
+        onClick={() => {
+          props.handleClick(tag)
+        }
+        }
       ></button>
     </div>
   );

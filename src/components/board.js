@@ -10,10 +10,12 @@ import {
 import CircularProgress from "@material-ui/core/CircularProgress";
 import "fontsource-roboto";
 import React, { useEffect, useState } from "react";
+import { Link } from 'react-router-dom';
 import { io } from "socket.io-client";
 import "../static/style.css";
 import Square from "./square";
-import Panel from './panel.js';
+import Panel from "./panel.js";
+import PawnDialog from "./choose_pawn.js";
 
 const extras = require("./extras.js");
 
@@ -28,13 +30,16 @@ function Board(props) {
   const [game_state, set_game_state] = useState(extras.newGame());
   const [next_move, set_next_move] = useState("White");
   // const [check, set_check] = useState(null);
-  const [valid_moves, set_valid_moves] = useState(null);
+  const [valid_moves, set_valid_moves] = useState([]);
   const [room_id, set_room_id] = useState(null);
   const [color, set_color] = useState(null);
   // Opponent -> 0 == false, 1 == true, 2 == opponent left
   const [opponent, set_opponent] = useState(0);
   // Dialog for if opponent leaves
   const [open, setOpen] = useState(false);
+  // end_w and end_b tell the board if a pawn has reached the end
+  const [end_w, set_end_w] = useState(null);
+  const [end_b, set_end_b] = useState(null);
 
   useEffect(() => {
     // SOCKET
@@ -69,20 +74,18 @@ function Board(props) {
       console.log(`[SOCKET] Message recieved ${data}`);
     });
 
-    socket.on("move", (JSON_new_state) => {
-      let new_state = JSON.parse(JSON_new_state);
-      console.log("[SOCKET] Recieved new game_state. -> ", new_state);
+    socket.on("move", data => {
+      let new_state = JSON.parse(data['JSON_game_state']);
+      console.log("[SOCKET] Recieved new game_state. -> ", data);
       // Set game state
       set_game_state(new_state);
       // Set next_move
-      if (next_move === "White") {
-        set_next_move("Black");
-      } else {
-        set_next_move("White");
-      }
+      set_next_move(data['n_move']);
     });
+  });
 
-    console.log("[USE EFFECT] Complete.");
+  useEffect(() => {
+    socket.emit("join");
   }, []);
 
   const getRow = (num) => {
@@ -114,7 +117,6 @@ function Board(props) {
     let j = letters.indexOf(tag[0]);
 
     let value = game_state[i][j];
-
     return value;
   };
 
@@ -131,7 +133,7 @@ function Board(props) {
       let coor_y = tag[1] - 1;
 
       // Game state
-      var local_game_state = game_state;
+      var local_game_state = [...game_state];
       // Get pawn in the square that is clicked
       const value = local_game_state[coor_y][coor_x];
 
@@ -143,7 +145,8 @@ function Board(props) {
         // Set clicked_square in state
         // Set valid next moves in state
         set_clicked_square([coor_x, coor_y]);
-        set_valid_moves(getValidMoves(coor_x, coor_y, value));
+        const vm = getValidMoves(coor_x, coor_y, value);
+        set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
       }
 
       // If pawn was already previously chosen, make a move
@@ -160,46 +163,66 @@ function Board(props) {
         // if chosen pawn and clicked pawn are same color
         if (value[0] === pawn[0]) {
           set_clicked_square([coor_x, coor_y]);
-          set_valid_moves(getValidMoves(coor_x, coor_y, value));
-        } else {
+          const vm = getValidMoves(coor_x, coor_y, value);
+          set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+          } else {
           // If move is valid
           if (extras.check_if_valid_move(coor_x, coor_y, valid_moves)) {
             // Update game state
             local_game_state[coor_y][coor_x] = pawn;
             local_game_state[pawn_y][pawn_x] = "";
 
-            // figure out next move
-            if (next_move1 === "w") {
-              // White moved, check check on black
-              if (checkCheck(game_state, "w")) {
-                console.log("check2");
-              }
-              set_next_move("Black");
-            } else {
-              // Black moved, check check on white
-              if (checkCheck(game_state, "b")) {
-                console.log("check1");
-              }
-              set_next_move("White");
-            }
             set_game_state(local_game_state);
             set_clicked_square(null);
+            set_valid_moves([]);
 
             // emit new game_state through the socket
             let JSON_game_state = JSON.stringify(local_game_state);
-            socket.emit("move", JSON_game_state);
-
-            console.log("JSON Game State: ", JSON_game_state);
-
+            let n_move = '';
+            if (color === 'White') {
+              n_move = 'Black';
+            } else {
+              n_move = 'White';
+            }
+            socket.emit("move", {
+              'JSON_game_state': JSON_game_state, 
+              'n_move': n_move
+            });
+            
             // If move is not valid
           } else {
             set_clicked_square([coor_x, coor_y]);
-            set_valid_moves(getValidMoves(coor_x, coor_y, value));
+            const vm = getValidMoves(coor_x, coor_y, value);
+            set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
           }
         }
       }
     }
   };
+
+  const v_moves = (state, moves, x, y, pawn) => {
+    let v_moves = []
+    for (let i = 0; i <= moves.length - 1; i++) {
+      let state_copy = [...state];
+      let move = moves[i];
+      let pawn1 = state_copy[move[1]][move[0]];
+      let pawn2 = state_copy[y][x];
+      state_copy[move[1]][move[0]] = pawn;
+      state_copy[y][x] = '';
+      let color = 'b';
+      if (pawn[0] === 'b') {
+        color = 'w';
+      }
+      let check = checkCheck(state_copy, color);
+      if (!check) {
+        v_moves.push(move);
+      }
+      console.log('check: ', check);
+      state_copy[move[1]][move[0]] = pawn1;
+      state_copy[y][x] = pawn2;      
+    }
+    return v_moves;
+  }
 
   const getValidMoves = (x, y, pawn) => {
     let valid_moves = [];
@@ -251,6 +274,31 @@ function Board(props) {
     return false;
   };
 
+  const getTagsOfValidMoves = (valid_moves) => {
+    let tags = [];
+    if (valid_moves.length > 0) {
+      for (let i = 0; i <= valid_moves.length - 1; i++) {
+        console.log('move: ', valid_moves[i]);
+        let move = valid_moves[i];
+        let y = (move[1] + 1).toString();
+        let x = letters[move[0]];
+        let tag = x + y;
+        tags.push(tag);
+      }
+      console.log('Tags: ', tags);
+    }
+    return tags;
+  }
+
+  const switchPawn = (x, y, pawn) => {
+    console.log(x, y, pawn);
+    let updated_game_state = game_state;
+    updated_game_state[y][x] = pawn;
+    set_game_state(updated_game_state);
+    set_end_b(null);
+    set_end_w(null);
+  };
+
   const handleExit = () => {
     socket.emit("leave", {
       room_id: room_id,
@@ -263,7 +311,7 @@ function Board(props) {
     });
     set_opponent(0);
     socket.emit("join");
-  }
+  };
 
   const handleClose = () => {
     setOpen(false);
@@ -289,39 +337,61 @@ function Board(props) {
   else {
     return (
       <div className="game">
-        { (opponent === 2) ?
-        <div className="dialog">
-          <Dialog
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-            className="dialog-dialog"
-          >
-            <DialogTitle id="alert-dialog-title">
-              {"Your opponent has left the game."}
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText id="alert-dialog-description">
-                Would you like to find a new game or exit?
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={
-                () => {
-                  handleFindNewGame()
-                }
-              } 
-              color="primary">
-                Find a New Game
-              </Button>
-              <Button onClick={handleExit} color="primary" autoFocus>
-                Exit
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </div> : null }
-        <Panel 
+        {end_w ? (
+          <PawnDialog
+            color={"w"}
+            open={true}
+            switchPawn={switchPawn}
+            data={end_w}
+          />
+        ) : null}
+        {end_b ? (
+          <PawnDialog
+            color={"b"}
+            open={true}
+            switchPawn={switchPawn}
+            data={end_b}
+          />
+        ) : null}
+        {opponent === 2 ? (
+          <div className="dialog">
+            <Dialog
+              open={open}
+              onClose={handleClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+              className="dialog-dialog"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {"Your opponent has left the game."}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  Would you like to find a new game or exit?
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => {
+                    handleFindNewGame();
+                  }}
+                  color="primary"
+                >
+                  Find a New Game
+                </Button>
+                <Button 
+                onClick={handleExit} 
+                component={Link}
+                to={'/'}
+                color="primary" 
+                autoFocus>
+                  Exit
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </div>
+        ) : null}
+        <Panel
           set_game_state={set_game_state}
           set_next_move={set_next_move}
           handleExit={handleExit}
@@ -340,6 +410,7 @@ function Board(props) {
                         tag={square.tag}
                         value={getSquareValue(square.tag)}
                         handleClick={handleClick}
+                        validMoves={getTagsOfValidMoves(valid_moves)}
                       />
                     );
                   })}

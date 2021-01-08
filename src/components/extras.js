@@ -7,45 +7,45 @@ function check_if_valid_move(x, y, valid_moves) {
   return false;
 }
 
-function pawn_valid_moves(x, y, pawn, game_state) {
+function pawn_valid_moves(x, y, pawn, igame_state) {
   let valid_moves = [];
 
   // White pawn
   if (pawn[0] === "w") {
     if (y === 6) {
-      if (game_state[y - 2][x] === "") {
+      if (igame_state[y - 2][x] === "") {
         valid_moves.push([x, y - 2]);
       }
     }
-    if (game_state[y - 1][x] === "") {
+    if (igame_state[y - 1][x] === "") {
       valid_moves.push([x, y - 1]);
     }
-    if (x !== 0 && game_state[y - 1][x - 1][0] === "b") {
+    if (x !== 0 && igame_state[y - 1][x - 1][0] === "b") {
       valid_moves.push([x - 1, y - 1]);
     }
-    if (x !== 7 && game_state[y - 1][x + 1][0] === "b") {
+    if (x !== 7 && igame_state[y - 1][x + 1][0] === "b") {
       valid_moves.push([x + 1, y - 1]);
     }
   } else if (pawn[0] === "b") {
     if (y === 1) {
-      if (game_state[y + 2][x] === "") {
+      if (igame_state[y + 2][x] === "") {
         valid_moves.push([x, y + 2]);
       }
     }
-    if (game_state[y + 1][x] === "") {
+    if (igame_state[y + 1][x] === "") {
       valid_moves.push([x, y + 1]);
     }
-    if (x !== 0 && game_state[y + 1][x - 1][0] === "w") {
+    if (x !== 0 && igame_state[y + 1][x - 1][0] === "w") {
       valid_moves.push([x - 1, y + 1]);
     }
-    if (x !== 7 && game_state[y + 1][x + 1][0] === "w") {
+    if (x !== 7 && igame_state[y + 1][x + 1][0] === "w") {
       valid_moves.push([x + 1, y + 1]);
     }
   }
   return valid_moves;
 }
 
-function knight_valid_moves(x, y, pawn, game_state) {
+function knight_valid_moves(x, y, pawn, igame_state) {
   let valid_moves = [];
 
   let pawn_color = pawn[0];
@@ -65,12 +65,12 @@ function knight_valid_moves(x, y, pawn, game_state) {
     let move = kn_moves[i];
 
     if (move[0] <= 7 && move[1] <= 7 && move[0] >= 0 && move[1] >= 0) {
-      if (game_state[move[1]][move[0]] === "") {
+      if (igame_state[move[1]][move[0]] === "") {
         valid_moves.push(move);
       }
       if (
-        game_state[move[1]][move[0]] !== "" &&
-        game_state[move[1]][move[0]][0] !== pawn_color
+        igame_state[move[1]][move[0]] !== "" &&
+        igame_state[move[1]][move[0]][0] !== pawn_color
       ) {
         valid_moves.push(move);
       }

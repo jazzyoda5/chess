@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import '../static/panel.css';
 import {
     Button,
@@ -11,15 +11,16 @@ const extras = require("./extras.js");
 function Panel(props) {
   return (
     <div className="panel">
-      <Button
+      {(!props.online) ? <Button
         onClick={() => {
           props.set_game_state(extras.newGame());
           props.set_next_move("White");
+          props.set_check(null);
         }}
         className="panel-but"
       >
         New Game
-      </Button>
+      </Button> : null }
       <div className="next-move">
         {(props.online === true)
         ? <Typography variant="subtitle1">Your color is | {props.color}</Typography>
