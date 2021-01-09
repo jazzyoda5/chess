@@ -9,7 +9,7 @@ import {
 } from "@material-ui/core";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import "fontsource-roboto";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { io } from "socket.io-client";
 import "../static/style.css";
@@ -31,7 +31,7 @@ function Board(props) {
   const [next_move, set_next_move] = useState("White");
   const [check, set_check] = useState(null);
   const [valid_moves, set_valid_moves] = useState([]);
-  const [room_id, set_room_id] = useState(null);
+  const [room_id, _set_room_id] = useState(null);
   const [color, set_color] = useState(null);
   // Opponent -> 0 == false, 1 == true, 2 == opponent left
   const [opponent, set_opponent] = useState(0);
@@ -41,11 +41,16 @@ function Board(props) {
   const [end_w, set_end_w] = useState(null);
   const [end_b, set_end_b] = useState(null);
 
+  const roomIdRef = useRef(room_id)
+  const set_room_id = data => {
+    roomIdRef.current = data;
+    _set_room_id(data);
+  }
+
   useEffect(() => {
     // SOCKET
-    socket.on("connect", () => {
+    socket.on("connect", (socket) => {
       console.log("[SOCKET] Is connected.");
-      socket.emit("join");
     });
 
     socket.on("room-data", (data) => {
@@ -418,6 +423,17 @@ function Board(props) {
       room_id: room_id,
     });
   };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", function (e) {
+      e.preventDefault();
+      e.returnValue = ' ';
+      socket.send(roomIdRef.current);
+      socket.emit("leave", {
+        room_id: roomIdRef.current,
+      });
+    })
+  }, [])
 
   const handleFindNewGame = () => {
     socket.emit("leave", {

@@ -135,7 +135,8 @@ function OfflineBoard(props) {
               console.log("check on black");
             }
             set_next_move("Black");
-          } else {
+          } 
+          else {
             // Black moved, check check on white
             if (
               checkCheck(
@@ -157,12 +158,21 @@ function OfflineBoard(props) {
           }
           makeMove(coor_x, coor_y, pawn_x, pawn_y, pawn, local_game_state);
           // If move is not valid
-        } else {
-          console.log("else runs");
-          const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
+        } 
+        else {
+          const castling = extras.check_if_castling(coor_x, coor_y, pawn_x, pawn_y, pawn, local_game_state);
+          console.log(castling);
+          if (castling !== false) {
 
-          set_clicked_square([coor_x, coor_y]);
-          set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+            handleCastling(castling, local_game_state, next_move1);
+          } else {
+            console.log("else runs");
+            const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
+
+            set_clicked_square([coor_x, coor_y]);
+            set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+
+          }
         }
       }
     }
@@ -176,13 +186,52 @@ function OfflineBoard(props) {
     set_game_state(updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state));
   };
 
+  const handleCastling = (type, state, next_move) => {
+    if (type === 'wR') {
+      state[7][4] = '';
+      state[7][5] = 'wR';
+      state[7][6] = 'wK';
+      state[7][7] = '';
+    } 
+    else if (type === 'wL') {
+      state[7][4] = '';
+      state[7][3] = 'wR';
+      state[7][2] = 'wK';
+      state[7][1] = '';
+      state[7][0] = '';      
+    }
+    else if (type === 'bR') {
+      state[0][4] = '';
+      state[0][5] = 'bR';
+      state[0][6] = 'bK';
+      state[0][7] = '';
+    }
+    else if (type === 'bL') {
+      state[0][4] = '';
+      state[0][3] = 'bR';
+      state[0][2] = 'bK';
+      state[0][1] = '';
+      state[0][0] = '';  
+    }
+
+    console.log("update game state runs");
+    set_clicked_square(null);
+    set_valid_moves([]);
+    set_game_state(state);
+
+    if (next_move === 'w') {
+      set_next_move('Black');
+    } else {
+      set_next_move('White');
+    }
+
+  }
+
   const v_moves = (state, moves, x, y, pawn) => {
     let v_moves = []
     for (let i = 0; i <= moves.length - 1; i++) {
       let state_copy = JSON.parse(JSON.stringify(state));
       let move = moves[i];
-      let pawn1 = state_copy[move[1]][move[0]];
-      let pawn2 = state_copy[y][x];
       state_copy[move[1]][move[0]] = pawn;
       state_copy[y][x] = '';
       let color = 'b';
@@ -212,6 +261,8 @@ function OfflineBoard(props) {
       valid_moves = extras.knight_valid_moves(x, y, pawn, local_game_state);
     } else if (pawn[1] === "K" && pawn.length === 2) {
       valid_moves = extras.king_valid_moves(x, y, pawn, local_game_state);
+      // If king is in his starting position
+      // Castling might be possible
     } else if (pawn[1] === "B") {
       valid_moves = extras.get_bishop_moves(x, y, pawn, local_game_state);
     }
@@ -228,7 +279,7 @@ function OfflineBoard(props) {
   };
 
   const switchPawn = (x, y, pawn) => {
-    let updated_game_state = [... game_state];
+    let updated_game_state = JSON.parse(JSON.stringify(game_state));
     updated_game_state[y][x] = pawn;
     set_game_state(updated_game_state);
     set_end_b(null);

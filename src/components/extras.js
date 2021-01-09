@@ -8,7 +8,6 @@ function check_if_valid_move(x, y, valid_moves) {
 }
 
 function pawn_valid_moves(x, y, pawn, igame_state) {
-  console.log('igame_state: ', igame_state);
   let valid_moves = [];
 
   // White pawn
@@ -267,6 +266,54 @@ function king_valid_moves(x, y, pawn, game_state) {
   return valid_moves;
 }
 
+function check_if_castling(x, y, pawn_x, pawn_y, pawn, game_state) {
+  console.log(x, y, pawn_x, pawn_y, pawn);
+  if (pawn === 'wK') {
+    if (pawn_x === 4 && pawn_y === 7) {
+      if (x === 6 && y === 7) {
+        if (game_state[7][5] === '' && game_state[7][6] === '') {
+          if (game_state[7][7] === 'wR') {
+            return 'wR'
+          }
+        }
+      }
+      else if (x === 2 && y === 7) {
+        for (let i = 1; i <= 3; i++) {
+          if (game_state[7][i] !== '') {
+            return false;
+          }
+        }
+        if (game_state[7][0] === 'wR') {
+          return 'wL';
+        }
+      }
+    }
+  }
+  else if (pawn === 'bK') {
+    if (pawn_x === 4 && pawn_y === 0) {
+      if (x === 6 && y === 0) {
+        if (game_state[0][5] === '' && game_state[0][6] === '') {
+          if (game_state[0][7] === 'bR') {
+            return 'bR'
+          }
+        }
+      }
+      else if (x === 2 && y === 0) {
+        for (let i = 1; i <= 3; i++) {
+          if (game_state[0][i] !== '') {
+            return false;
+          }
+        }
+        if (game_state[0][0] === 'bR') {
+          return 'bL';
+        }
+      }
+    }
+  } else {
+    return false;
+  }
+}
+
 // Returns a fresh game_state list
 const newGame = () => {
   let new_game = [];
@@ -311,4 +358,5 @@ module.exports = {
   get_bishop_moves,
   king_valid_moves,
   newGame,
+  check_if_castling
 };
