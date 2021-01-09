@@ -8,6 +8,7 @@ function check_if_valid_move(x, y, valid_moves) {
 }
 
 function pawn_valid_moves(x, y, pawn, igame_state) {
+  console.log('igame_state: ', igame_state);
   let valid_moves = [];
 
   // White pawn

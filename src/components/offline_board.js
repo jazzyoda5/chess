@@ -52,7 +52,8 @@ function OfflineBoard(props) {
   };
 
   function handleClick(tag) {
-    const local_game_state = [...game_state];
+    const local_game_state = JSON.parse(JSON.stringify(game_state));
+
     /*
             - pawn is the value of previosly chosen square
             - value is the value of second chosen square!
@@ -178,7 +179,7 @@ function OfflineBoard(props) {
   const v_moves = (state, moves, x, y, pawn) => {
     let v_moves = []
     for (let i = 0; i <= moves.length - 1; i++) {
-      let state_copy = [... state];
+      let state_copy = JSON.parse(JSON.stringify(state));
       let move = moves[i];
       let pawn1 = state_copy[move[1]][move[0]];
       let pawn2 = state_copy[y][x];
@@ -191,10 +192,7 @@ function OfflineBoard(props) {
       let check = checkCheck(state_copy, color);
       if (!check) {
         v_moves.push(move);
-      }
-      console.log('check: ', check);
-      state_copy[move[1]][move[0]] = pawn1;
-      state_copy[y][x] = pawn2;      
+      }  
     }
     return v_moves;
   }
