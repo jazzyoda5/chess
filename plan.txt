@@ -52,8 +52,8 @@ when it reaches the opposite end of the board
 
 To-Do :
 
+- Handle disconnect on server-side
 - Move non react functions to extras
-- Putting your own king in check is a bad move
 - Castling
 - checkmate
 

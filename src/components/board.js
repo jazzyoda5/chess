@@ -48,13 +48,6 @@ function Board(props) {
       socket.emit("join");
     });
 
-    /*
-    socket.on("disconnect", () => {
-      socket.emit('leave', {
-        'room_id': room_id,
-      })
-    });
-    */
     socket.on("room-data", (data) => {
       console.log("[SOCKET] Room Data");
       let room_id1 = data["room_id"];
@@ -90,7 +83,7 @@ function Board(props) {
       set_game_state(new_state);
       // Set next_move
       set_next_move(data["n_move"]);
-      set_check(data['check']);
+      set_check(data["check"]);
     });
   }, [color, room_id]);
 
@@ -189,19 +182,22 @@ function Board(props) {
 
             // Check if it is a pawn that reached the end
             // Of the board
-            if (pawn === "wP" && coor_y === 0) {
-              set_end_w([coor_x, coor_y, "wP"]);
-            }
-            if (pawn === "bP" && coor_y === 7) {
-              set_end_b([coor_x, coor_y, "bP"]);
-            }
-
             let n_move = "";
             if (color === "White") {
               n_move = "Black";
             } else {
               n_move = "White";
             }
+
+            if (pawn === "wP" && coor_y === 0) {
+              set_end_w([coor_x, coor_y, pawn_x, pawn_y, "wP", n_move, next_move1]);
+              return;
+            }
+            if (pawn === "bP" && coor_y === 7) {
+              set_end_b([coor_x, coor_y, "bP"]);
+              return;
+            }
+
             makeMove(
               coor_x,
               coor_y,
@@ -245,42 +241,32 @@ function Board(props) {
     */
     var check = null;
     // figure out next move
+    /*
+    Every time there is a check, I will check for checkmate.
+    */
+
     if (next_move1 === "w") {
       // White moved, check check on black
       if (
         checkCheck(
-          updateGameState(
-            x,
-            y,
-            pawn_x,
-            pawn_y,
-            pawn,
-            local_game_state
-          ),
+          updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state),
           "w"
         )
       ) {
         handleCheck("b");
-        check = 'b';
+        check = "b";
         console.log("check on black");
       }
     } else {
       // Black moved, check check on white
       if (
         checkCheck(
-          updateGameState(
-            x,
-            y,
-            pawn_x,
-            pawn_y,
-            pawn,
-            local_game_state
-          ),
+          updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state),
           "b"
         )
       ) {
         handleCheck("w");
-        check = 'b';
+        check = "w";
         console.log("check on white");
       }
     }
@@ -294,7 +280,7 @@ function Board(props) {
     socket.emit("move", {
       JSON_game_state: JSON_game_state,
       n_move: n_move,
-      check: check
+      check: check,
     });
   };
 
@@ -405,11 +391,24 @@ function Board(props) {
     return tags;
   };
 
-  const switchPawn = (x, y, pawn) => {
-    console.log(x, y, pawn);
-    let updated_game_state = game_state;
-    updated_game_state[y][x] = pawn;
-    set_game_state(updated_game_state);
+  const switchPawn = (x, y, pawn_x, pawn_y, pawn, next_move1) => {
+    let n_move = "";
+    if (color === "White") {
+      n_move = "Black";
+    } else {
+      n_move = "White";
+    }
+    let local_game_state = JSON.parse(JSON.stringify(game_state));
+    makeMove(
+      x,
+      y,
+      pawn_x,
+      pawn_y,
+      pawn,
+      local_game_state,
+      n_move,
+      next_move1
+    );
     set_end_b(null);
     set_end_w(null);
   };

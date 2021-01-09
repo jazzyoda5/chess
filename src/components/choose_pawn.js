@@ -48,7 +48,7 @@ export default function PawnDialog(props) {
                             // Data[0] is x
                             // Data[1] is y
                             // data[2] is the pawn
-                            onClick={() => {switchPawn(data[0], data[1], key)}}
+                            onClick={() => {switchPawn(data[0], data[1], data[2], data[3], key, data[5], data[6])}}
                         ></Button>
                     </ListItem>
                 );
