@@ -52,6 +52,5 @@ when it reaches the opposite end of the board
 
 To-Do :
 
-- Castling
 - checkmate
 
