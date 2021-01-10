@@ -26,7 +26,7 @@ function Menu(props) {
                     component={Link}
                     to={'/online'}
                     >
-                        Online Game 
+                        ONLINE GAME
                     </Button>
                 </li>
             </ul>

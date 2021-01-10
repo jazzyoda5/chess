@@ -4,6 +4,7 @@ import "../static/style.css";
 import Square from "./square";
 import Panel from "./panel.js";
 import PawnDialog from "./choose_pawn";
+import CheckmateDialog from "./checkmate_dialog";
 
 const extras = require("./extras.js");
 
@@ -17,6 +18,7 @@ function OfflineBoard(props) {
   const [valid_moves, set_valid_moves] = useState([]);
   const [end_w, set_end_w] = useState(null);
   const [end_b, set_end_b] = useState(null);
+  const [checkmate, set_checkmate] = useState(false);
 
   const getRow = (num) => {
     let row = [];
@@ -352,7 +354,37 @@ function OfflineBoard(props) {
   const handleCheck = (color) => {
     // color = Color of the king that is in danger
     set_check(color);
+    // Check if it checkmate
+    const lg_state = JSON.parse(JSON.stringify(game_state));
+    const mate = checkCheckmate(lg_state, color);
+    if (mate !== false) {
+      set_checkmate(mate);
+    }
   };
+
+  const checkCheckmate = (state, color) => {
+    // Get all moves and if there are no possible moves
+    // It is checkmate
+    let v_moves = [];
+    for (let i = 0; i <= state.length - 1; i++) {
+      for (let j = 0; j <= state[i].length - 1; i++) {
+        let pawn = state[i][j];
+        if (pawn[0] === color) {
+          const vm = getValidMoves(j, i, pawn, state);
+          let moves = v_moves(state, vm, j, i, pawn);
+          if (moves.length > 0) {
+            for (let x = 0; x <= moves.length - 1; x++) {
+              v_moves.push(moves[x]);
+            }
+          }
+        } 
+      }
+    }
+    if (v_moves.length < 1) {
+      return true;
+    }
+    return false;
+  }
 
   const handleExit = () => {
     void 0;
@@ -377,6 +409,13 @@ function OfflineBoard(props) {
           open={true}
           switchPawn={switchPawn}
           data={end_b}
+        />
+      ) : null}
+      {(checkmate !== false) ? (
+        <CheckmateDialog
+          open={true}
+          winner={checkmate}
+          handleExit={handleExit}
         />
       ) : null}
       <Panel

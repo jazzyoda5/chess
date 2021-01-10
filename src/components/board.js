@@ -11,19 +11,16 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import "fontsource-roboto";
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { io } from "socket.io-client";
 import "../static/style.css";
 import Square from "./square";
 import Panel from "./panel.js";
 import PawnDialog from "./choose_pawn.js";
+import CheckmateDialog from "./checkmate_dialog";
+import { socket } from '../socket/socket';
 
 const extras = require("./extras.js");
 
 const letters = "abcdefgh";
-
-let socket = io.connect("http://localhost:5000", {
-  "sync disconnect on unload": true,
-});
 
 function Board(props) {
   const [clicked_square, set_clicked_square] = useState(null);
@@ -41,7 +38,9 @@ function Board(props) {
   const [end_w, set_end_w] = useState(null);
   const [end_b, set_end_b] = useState(null);
   // This solves an error that occured when finding valid_moves after castling
+  // So after a user has castled, it doesn't try to see, if castling is still possible
   const [already_castled, set_castled] = useState(false);
+  const [checkmate, set_checkmate] = useState(false);
 
   // To avoid being stranded if opponent
   // Closes browser window mid game
@@ -56,7 +55,7 @@ function Board(props) {
   // Handling socket events
   useEffect(() => {
     // SOCKET
-    socket.on("connect", (socket) => {
+    socket.on("connect", () => {
       console.log("[SOCKET] Is connected.");
     });
 
@@ -162,7 +161,7 @@ function Board(props) {
         // Set clicked_square in state
         // Set valid next moves in state
         const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-        console.log('vm', vm);
+        console.log("vm", vm);
 
         set_clicked_square([coor_x, coor_y]);
         set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
@@ -182,7 +181,7 @@ function Board(props) {
         if (value[0] === pawn[0]) {
           set_clicked_square([coor_x, coor_y]);
           const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-          console.log('vm', vm);
+          console.log("vm", vm);
           set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
         } else {
           // If move is valid
@@ -211,6 +210,10 @@ function Board(props) {
             );
             console.log(castling);
             if (castling !== false) {
+              /*
+              Castling is handled by a different
+              method than making a move
+              */
               handleCastling(castling, local_game_state, n_move);
               return;
             }
@@ -285,7 +288,7 @@ function Board(props) {
           "w"
         )
       ) {
-        handleCheck("b");
+        handleCheck("b", x, y, pawn_x, pawn_y, pawn, local_game_state);
         check = "b";
       }
     } else {
@@ -296,7 +299,7 @@ function Board(props) {
           "b"
         )
       ) {
-        handleCheck("w");
+        handleCheck("w", x, y, pawn_x, pawn_y, pawn, local_game_state);
         check = "w";
       }
     }
@@ -352,8 +355,10 @@ function Board(props) {
     });
   };
 
-  // Second valid moves function is to avoid putting
-  // Your own pieces in check
+  // This valid moves function is to avoid putting
+  // Your own pieces in check and aking it so
+  // That you have to get out of check with if
+  // Your king is checked
   const v_moves = (state, moves, x, y, pawn) => {
     let v_moves = [];
 
@@ -439,6 +444,31 @@ function Board(props) {
     return false;
   };
 
+  const checkCheckmate = (state, color) => {
+    // Get all moves and if there are no possible moves
+    // It is checkmate
+    let v_moves = [];
+    for (let i = 0; i <= state.length - 1; i++) {
+      for (let j = 0; j <= state[i].length - 1; i++) {
+        let pawn = state[i][j];
+        if (pawn[0] === color) {
+          const vm = getValidMoves(j, i, pawn, state);
+          let moves = v_moves(state, vm, j, i, pawn);
+          if (moves.length > 0) {
+            for (let x = 0; x <= moves.length - 1; x++) {
+              v_moves.push(moves[x]);
+            }
+          }
+        }
+      }
+    }
+    if (v_moves.length < 1) {
+      return true;
+    }
+    return false;
+  };
+
+  // Makes a move and returns a new version of game_state
   const updateGameState = (
     coor_x,
     coor_y,
@@ -452,11 +482,29 @@ function Board(props) {
     return l_game_state;
   };
 
-  const handleCheck = (color) => {
+  const handleCheck = (color, x, y, pawn_x, pawn_y, pawn, local_game_state) => {
     // color = Color of the king that is in danger
     set_check(color);
+
+    // Check for checkmate
+    let lg_state = JSON.parse(JSON.stringify(game_state));
+    const mate = checkCheckmate(lg_state, color);
+    if (mate !== false) {
+      lg_state = updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state);
+      set_checkmate(mate);
+      socket.emit('checkmate', {
+        'game_state': lg_state,
+        'checkmate': mate
+      });
+      // Emit checkmate
+    }
   };
 
+  /*
+  When valid moves are calculated
+  This function finds the tags of those moves
+  so it can feed it to <Square />
+  */
   const getTagsOfValidMoves = (valid_moves) => {
     let tags = [];
     if (valid_moves.length > 0) {
@@ -473,6 +521,11 @@ function Board(props) {
     return tags;
   };
 
+  /*
+  This function switches the pawn
+  for whatever the user chooses 
+  after a pawn reaches the end of the board
+  */
   const switchPawn = (x, y, pawn_x, pawn_y, pawn, next_move1) => {
     let n_move = "";
     if (color === "White") {
@@ -492,6 +545,7 @@ function Board(props) {
     });
   };
 
+  // Handles closing the browser window
   useEffect(() => {
     window.addEventListener("beforeunload", function (e) {
       e.preventDefault();
@@ -589,6 +643,13 @@ function Board(props) {
               </DialogActions>
             </Dialog>
           </div>
+        ) : null}
+        {checkmate !== false ? (
+          <CheckmateDialog
+            open={true}
+            winner={checkmate}
+            handleExit={handleExit}
+          />
         ) : null}
         <Panel
           set_game_state={set_game_state}

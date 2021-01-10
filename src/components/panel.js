@@ -23,10 +23,10 @@ function Panel(props) {
       </Button> : null }
       <div className="next-move">
         {(props.online === true)
-        ? <Typography variant="subtitle1">Your color is | {props.color}</Typography>
+        ? <Typography variant="subtitle1">Your color is | <strong>{props.color}</strong></Typography>
         : null
         }
-        <Typography variant="subtitle1">Next Move | {props.next_move}</Typography>
+        <Typography variant="subtitle1">Next Move | <strong>{props.next_move}</strong></Typography>
       </div>
         <Button
           component={Link}

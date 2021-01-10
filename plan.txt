@@ -52,5 +52,5 @@ when it reaches the opposite end of the board
 
 To-Do :
 
-- checkmate
+- Edit checkmateDialog
 
