@@ -7,6 +7,7 @@ import "fontsource-roboto";
 import Typography from '@material-ui/core/Typography';
 
 function App(props) {
+  console.log(process.env);
   return (
     <div className="App">
       <Typography variant="h2" component="h2" gutterBottom>

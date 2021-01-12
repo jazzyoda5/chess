@@ -42,6 +42,7 @@ function Board(props) {
   const [already_castled, set_castled] = useState(false);
   const [checkmate, set_checkmate] = useState(false);
 
+
   // To avoid being stranded if opponent
   // Closes browser window mid game
   // Handle function is on the bottom
@@ -566,19 +567,48 @@ function Board(props) {
     socket.emit("leave", {
       room_id: room_id,
     });
+    // reset component
+    set_room_id(null);
+    set_color(null);
+    set_checkmate(false);
+    set_check(null);
+    set_castled(false);
+    set_next_move('White');
+    set_game_state(extras.newGame());
   };
+
+  const handleUnload = (event) => {
+    event.preventDefault();
+    event.returnValue = " ";
+    socket.emit("leave", {
+      room_id: roomIdRef.current,
+    });
+  }
 
   // Handles closing the browser window
   useEffect(() => {
-    window.addEventListener("beforeunload", function (e) {
-      e.preventDefault();
-      e.returnValue = " ";
-      socket.send(roomIdRef.current);
-      socket.emit("leave", {
-        room_id: roomIdRef.current,
-      });
-    });
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    }
   }, []);
+
+  useEffect(() => {
+    window.onpopstate = () => {
+      socket.emit('leave', {
+        'room_id': roomIdRef.current,
+      })
+      // reset component
+      set_room_id(null);
+      set_color(null);
+      set_checkmate(false);
+      set_check(null);
+      set_castled(false);
+      set_next_move('White');
+      set_game_state(extras.newGame());
+    };
+  }, [])
 
   const handleFindNewGame = () => {
     socket.emit("leave", {
@@ -587,9 +617,15 @@ function Board(props) {
     // No opponent
     set_opponent(0);
 
-    // No room data
+    // reset component
     set_room_id(null);
     set_color(null);
+    set_checkmate(false);
+    set_check(null);
+    set_castled(false);
+    set_next_move('White');
+    set_game_state(extras.newGame());
+
     socket.emit("join");
   };
 
