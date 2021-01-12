@@ -584,7 +584,12 @@ function Board(props) {
     socket.emit("leave", {
       room_id: room_id,
     });
+    // No opponent
     set_opponent(0);
+
+    // No room data
+    set_room_id(null);
+    set_color(null);
     socket.emit("join");
   };
 
