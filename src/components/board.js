@@ -330,6 +330,7 @@ function Board(props) {
       JSON_game_state: JSON_game_state,
       n_move: n_move,
       check: check,
+      room_id: room_id 
     });
   };
 
@@ -368,6 +369,7 @@ function Board(props) {
       JSON_game_state: JSON_game_state,
       n_move: n_move,
       check: check,
+      room_id: room_id
     });
   };
 
