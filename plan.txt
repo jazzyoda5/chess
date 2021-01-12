@@ -50,7 +50,8 @@ when it reaches the opposite end of the board
 
 ---
 
-To-Do :
+Bugs:
 
-- Edit checkmateDialog
-
+- checkingCheck type error
+- Making a move with another's pawn offline
+- Leaving rooms Bugs

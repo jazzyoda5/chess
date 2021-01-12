@@ -362,6 +362,10 @@ function Board(props) {
   const v_moves = (state, moves, x, y, pawn) => {
     let v_moves = [];
 
+    if (color[0].toLowerCase() !== pawn[0]) {
+      return v_moves;
+    }
+
     if (pawn[0] === color[0].toLowerCase()) {
       for (let i = 0; i <= moves.length - 1; i++) {
         let state_copy = JSON.parse(JSON.stringify(state));
@@ -445,9 +449,10 @@ function Board(props) {
   };
 
   const checkCheckmate = (state, color) => {
+    console.log('checkmate state: ', state);
     // Get all moves and if there are no possible moves
     // It is checkmate
-    let v_moves = [];
+    let valid_moves1 = [];
     for (let i = 0; i <= state.length - 1; i++) {
       for (let j = 0; j <= state[i].length - 1; i++) {
         let pawn = state[i][j];
@@ -456,13 +461,13 @@ function Board(props) {
           let moves = v_moves(state, vm, j, i, pawn);
           if (moves.length > 0) {
             for (let x = 0; x <= moves.length - 1; x++) {
-              v_moves.push(moves[x]);
+              valid_moves1.push(moves[x]);
             }
           }
         }
       }
     }
-    if (v_moves.length < 1) {
+    if (valid_moves1.length < 1) {
       return true;
     }
     return false;
@@ -482,13 +487,13 @@ function Board(props) {
     return l_game_state;
   };
 
-  const handleCheck = (color, x, y, pawn_x, pawn_y, pawn, local_game_state) => {
+  const handleCheck = (given_color, x, y, pawn_x, pawn_y, pawn, local_game_state) => {
     // color = Color of the king that is in danger
-    set_check(color);
+    set_check(given_color);
 
     // Check for checkmate
     let lg_state = JSON.parse(JSON.stringify(game_state));
-    const mate = checkCheckmate(lg_state, color);
+    const mate = checkCheckmate(lg_state, given_color);
     if (mate !== false) {
       lg_state = updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state);
       set_checkmate(mate);
