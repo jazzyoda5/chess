@@ -31,10 +31,9 @@
     border: none;
     color: rgb(0, 204, 0);
 }
+
 .square button:focus {
-    outline-style: solid;
-    outline-color: white;
-    outline-width: 2px;
+    outline: none;
 }
 .squares {
     border-style: solid;

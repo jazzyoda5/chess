@@ -54,6 +54,7 @@ function OfflineBoard(props) {
   };
 
   function handleClick(tag) {
+    // Make a copy of the game_state
     const local_game_state = JSON.parse(JSON.stringify(game_state));
 
     /*
@@ -75,12 +76,7 @@ function OfflineBoard(props) {
     if (clicked_square === null && value !== "" && value[0] === next_move1) {
       // Set clicked_square in state
       // Set valid next moves in state
-      console.log("jakob56");
       const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-      console.log(
-        "v_moves: ",
-        v_moves(local_game_state, vm, coor_x, coor_y, value)
-      );
       set_clicked_square([coor_x, coor_y]);
       set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
     }
@@ -100,10 +96,14 @@ function OfflineBoard(props) {
       if (value[0] === pawn[0]) {
         set_clicked_square([coor_x, coor_y]);
         const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-
+        if (value[0] === next_move1) {
         set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+        } else if (value[0] !== next_move) {
+          set_valid_moves([]);
+        }
       } else {
-        // If move is valid
+        // There is no pawn of the samo color on clicked square
+        // Try to make a move
         if (
           extras.check_if_valid_move(
             coor_x,
@@ -112,10 +112,10 @@ function OfflineBoard(props) {
             local_game_state
           )
         ) {
-          /* If the previous move checked the opponent
-              opponent must make sure his next move
-              unchecks his king
-          */
+          // Move is valid
+
+          // Castling is handled by a different method
+          // than making a move
           const castling = extras.check_if_castling(
             coor_x,
             coor_y,
@@ -124,7 +124,7 @@ function OfflineBoard(props) {
             pawn,
             local_game_state
           );
-          console.log(castling);
+
           if (castling !== false) {
             handleCastling(castling, local_game_state, next_move1);
             return;
@@ -138,44 +138,11 @@ function OfflineBoard(props) {
           if (pawn === "bP" && coor_y === 7) {
             set_end_b([coor_x, coor_y, "bP"]);
           }
+
           // figure out next move
           if (next_move1 === "w") {
-            // White moved, check check on black
-            if (
-              checkCheck(
-                updateGameState(
-                  coor_x,
-                  coor_y,
-                  pawn_x,
-                  pawn_y,
-                  pawn,
-                  local_game_state
-                ),
-                "w"
-              )
-            ) {
-              handleCheck("b");
-              console.log("check on black");
-            }
             set_next_move("Black");
           } else {
-            // Black moved, check check on white
-            if (
-              checkCheck(
-                updateGameState(
-                  coor_x,
-                  coor_y,
-                  pawn_x,
-                  pawn_y,
-                  pawn,
-                  local_game_state
-                ),
-                "b"
-              )
-            ) {
-              handleCheck("w");
-              console.log("check on white");
-            }
             set_next_move("White");
           }
           makeMove(coor_x, coor_y, pawn_x, pawn_y, pawn, local_game_state);
@@ -185,20 +152,34 @@ function OfflineBoard(props) {
           const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
 
           set_clicked_square([coor_x, coor_y]);
+          if (value[0] === next_move1) {
           set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+          } else {
+            set_valid_moves([]);
+          } 
         }
       }
     }
-    console.log("game_state_end: ", local_game_state);
   }
 
   const makeMove = (x, y, pawn_x, pawn_y, pawn, local_game_state) => {
-    console.log("update game state runs");
+    const updated_game_state = updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state);
+    set_game_state(updated_game_state);
     set_clicked_square(null);
     set_valid_moves([]);
-    set_game_state(
-      updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state)
-    );
+    // Check for check after making a move
+    let color1 = 'b'
+    if (pawn[0] === 'b') {
+      color1 = 'w';
+    }
+    if (checkCheck(
+      updated_game_state,
+      pawn[0]
+    )) {
+      handleCheck(color1, updated_game_state);
+    } else {
+      set_check(null);
+    }
   };
 
   const handleCastling = (type, state, next_move) => {
@@ -240,6 +221,11 @@ function OfflineBoard(props) {
 
   const v_moves = (state, moves, x, y, pawn) => {
     let v_moves = [];
+    
+    // To avoid being able to move black if it is white's turn
+    // and vice-versa
+
+    // For every move in valid_moves check for check
     for (let i = 0; i <= moves.length - 1; i++) {
       let state_copy = JSON.parse(JSON.stringify(state));
       let move = moves[i];
@@ -275,10 +261,12 @@ function OfflineBoard(props) {
       // If king is in his starting position
       // Castling might be possible
       const c_move = extras.castling_possible(x, y, pawn, local_game_state);
-      if (c_move !== false && !checking_check) {
+      // c_move !== undefined is a quick bug fix
+      if (c_move !== false && !checking_check && c_move !== undefined) {
         console.log("add_castling_move");
         valid_moves.push(c_move);
       }
+
     } else if (pawn[1] === "B") {
       valid_moves = extras.get_bishop_moves(x, y, pawn, local_game_state);
     }
@@ -324,9 +312,9 @@ function OfflineBoard(props) {
 
         if (pawn[0] === color) {
           // When doing this don't check for castling move
-          let valid_moves = getValidMoves(j, i, pawn, igame_state, true);
-          for (let k = 0; k <= valid_moves.length - 1; k++) {
-            let pawn_on_pos = igame_state[valid_moves[k][1]][valid_moves[k][0]];
+          let valid_moves1 = getValidMoves(j, i, pawn, igame_state, true);
+          for (let k = 0; k <= valid_moves1.length - 1; k++) {
+            let pawn_on_pos = igame_state[valid_moves1[k][1]][valid_moves1[k][0]];
             if (pawn_on_pos[1] === "K" && pawn_on_pos.length === 2) {
               return true;
             }
@@ -351,38 +339,46 @@ function OfflineBoard(props) {
     return tags;
   };
 
-  const handleCheck = (color) => {
+  // lg_state == local_game_state
+  const handleCheck = (color, lg_state) => {
     // color = Color of the king that is in danger
     set_check(color);
+
     // Check if it checkmate
-    const lg_state = JSON.parse(JSON.stringify(game_state));
     const mate = checkCheckmate(lg_state, color);
-    if (mate !== false) {
+    
+    if (mate) {
       set_checkmate(mate);
     }
   };
 
   const checkCheckmate = (state, color) => {
-    // Get all moves and if there are no possible moves
+    // color = color of king in danger
+    // Get all possible moves and if there are no possible moves
     // It is checkmate
-    let v_moves = [];
-    for (let i = 0; i <= state.length - 1; i++) {
-      for (let j = 0; j <= state[i].length - 1; i++) {
+    let v_moves1 = [];
+    console.log('checkmate state: ', state);
+
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
         let pawn = state[i][j];
+
         if (pawn[0] === color) {
           const vm = getValidMoves(j, i, pawn, state);
           let moves = v_moves(state, vm, j, i, pawn);
           if (moves.length > 0) {
             for (let x = 0; x <= moves.length - 1; x++) {
-              v_moves.push(moves[x]);
+              v_moves1.push(moves[x]);
             }
           }
         } 
       }
     }
-    if (v_moves.length < 1) {
-      return true;
+    if (v_moves1.length < 1) {
+      console.log('possible moves: ', v_moves1);
+      return color;
     }
+    console.log('v_moves length: ', v_moves1.length);
     return false;
   }
 
@@ -428,12 +424,13 @@ function OfflineBoard(props) {
       />
       <div className="board">
         <div className="squares">
-          {board_data.map((row) => {
+          {board_data.map((row, i) => {
             return (
-              <div className="board-row">
+              <div className="board-row" key={i}>
                 {row.map((square) => {
                   return (
                     <Square
+                      key={square.tag}
                       tag={square.tag}
                       value={getSquareValue(square.tag)}
                       handleClick={handleClick}

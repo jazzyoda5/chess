@@ -13,6 +13,8 @@ export default function CheckmateDialog(props) {
       var temp = "White";
     } else if (winner === "b") {
       temp = "Black";
+    } else {
+      return winner;
     }
     return temp;
   };

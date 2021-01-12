@@ -52,56 +52,57 @@ function Board(props) {
     _set_room_id(data);
   };
 
-  // Handling socket events
+  // Run only once to join the game
   useEffect(() => {
+    console.log("[SOCKET] Joining a game.");
+    socket.emit("join");
+
     // SOCKET
     socket.on("connect", () => {
       console.log("[SOCKET] Is connected.");
     });
 
-    socket.on("room-data", (data) => {
-      console.log("[SOCKET] Room Data");
-      let room_id1 = data["room_id"];
-      let color1 = data["color"];
-      set_room_id(room_id1);
-      set_color(color1);
-
-      console.log("room_id: ", room_id);
-      console.log("color: ", color);
-    });
-
+    // If opponent is found
+    // Or if he left
     socket.on("opponent", (message) => {
       console.log("[SOCKET] Opponent found.");
+
       if (message === "left") {
         set_opponent(2);
         setOpen(true);
       }
     });
 
+    // Game can begin
     socket.on("full-room", () => {
-      console.log("[SOCKET] Opponent found, full room.");
       set_opponent(1);
-    });
-
-    socket.on("message", (data) => {
-      console.log(`[SOCKET] Message recieved ${data}`);
     });
 
     socket.on("move", (data) => {
       let new_state = JSON.parse(data["JSON_game_state"]);
-      console.log("[SOCKET] Recieved new game_state. -> ", data);
       // Set game state
       set_game_state(new_state);
       // Set next_move
       set_next_move(data["n_move"]);
       set_check(data["check"]);
     });
-  }, [color, room_id]);
 
-  // Run only once to join the game
-  useEffect(() => {
-    console.log("[SOCKET] Joining a game.");
-    socket.emit("join");
+    // When you joing a game you recieve data about the game
+    socket.on("room-data", (data) => {
+      let room_id1 = data["room_id"];
+      let color1 = data["color"];
+      set_room_id(room_id1);
+      set_color(color1);
+    });
+
+    socket.on("message", (data) => {
+      console.log(`[SOCKET] Message recieved ${data}`);
+    });
+
+    socket.on('checkmate', (data) => {
+      set_game_state(data['game_state']);
+      set_checkmate(data['checkmate']);
+    })
   }, []);
 
   const getRow = (num) => {
@@ -182,7 +183,15 @@ function Board(props) {
           set_clicked_square([coor_x, coor_y]);
           const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
           console.log("vm", vm);
-          set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+
+          // If clicked pawn is your playing color than get valid moves
+          // This if statement fixes some bugs where
+          // You could move other player's pawns
+          if (value[0] === color[0].toLowerCase()) {
+            set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
+          } else {
+            set_valid_moves([]);
+          }
         } else {
           // If move is valid
           if (extras.check_if_valid_move(coor_x, coor_y, valid_moves)) {
@@ -250,9 +259,13 @@ function Board(props) {
           } else {
             set_clicked_square([coor_x, coor_y]);
             const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-            set_valid_moves(
-              v_moves(local_game_state, vm, coor_x, coor_y, value)
-            );
+            if (value[0] === color[0].toLowerCase()) {
+              set_valid_moves(
+                v_moves(local_game_state, vm, coor_x, coor_y, value)
+              );
+            } else {
+              set_valid_moves([]);
+            }
           }
         }
       }
@@ -280,6 +293,12 @@ function Board(props) {
     Every time there is a check, I will check for checkmate.
     */
 
+    set_clicked_square(null);
+    set_valid_moves([]);
+    set_game_state(
+      updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state)
+    );
+
     if (next_move1 === "w") {
       // White moved, check check on black
       if (
@@ -303,11 +322,7 @@ function Board(props) {
         check = "w";
       }
     }
-    set_clicked_square(null);
-    set_valid_moves([]);
-    set_game_state(
-      updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state)
-    );
+
     // emit new game_state through the socket
     let JSON_game_state = JSON.stringify(local_game_state);
     socket.emit("move", {
@@ -379,7 +394,6 @@ function Board(props) {
         let check = checkCheck(state_copy, color);
         if (!check) {
           v_moves.push(move);
-          console.log("valid_move_found");
         }
       }
     }
@@ -408,8 +422,7 @@ function Board(props) {
     } else if (pawn[1] === "K" && pawn.length === 2) {
       valid_moves = extras.king_valid_moves(x, y, pawn, local_game_state);
       const c_move = extras.castling_possible(x, y, pawn, local_game_state);
-      if (c_move !== false && !checking_check && !already_castled) {
-        console.log("add_castling_move");
+      if (c_move !== false && !checking_check && !already_castled && c_move !== undefined) {
         valid_moves.push(c_move);
       }
     } else if (pawn[1] === "B") {
@@ -450,11 +463,12 @@ function Board(props) {
 
   const checkCheckmate = (state, color) => {
     console.log('checkmate state: ', state);
+
     // Get all moves and if there are no possible moves
     // It is checkmate
     let valid_moves1 = [];
-    for (let i = 0; i <= state.length - 1; i++) {
-      for (let j = 0; j <= state[i].length - 1; i++) {
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
         let pawn = state[i][j];
         if (pawn[0] === color) {
           const vm = getValidMoves(j, i, pawn, state);
@@ -468,8 +482,13 @@ function Board(props) {
       }
     }
     if (valid_moves1.length < 1) {
-      return true;
+      if (color === 'w') {
+        return 'Black';
+      } else {
+        return 'White';
+      }
     }
+    console.log('c_move checkmate: ', valid_moves1);
     return false;
   };
 
@@ -487,19 +506,20 @@ function Board(props) {
     return l_game_state;
   };
 
-  const handleCheck = (given_color, x, y, pawn_x, pawn_y, pawn, local_game_state) => {
+  const handleCheck = (given_color, x, y, pawn_x, pawn_y, pawn, lg_state) => {
     // color = Color of the king that is in danger
     set_check(given_color);
 
     // Check for checkmate
-    let lg_state = JSON.parse(JSON.stringify(game_state));
-    const mate = checkCheckmate(lg_state, given_color);
+    let mate = checkCheckmate(lg_state, given_color);
+
+    // If checkmate
     if (mate !== false) {
-      lg_state = updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state);
       set_checkmate(mate);
       socket.emit('checkmate', {
         'game_state': lg_state,
-        'checkmate': mate
+        'checkmate': mate,
+        'room_id': room_id
       });
       // Emit checkmate
     }
@@ -514,14 +534,12 @@ function Board(props) {
     let tags = [];
     if (valid_moves.length > 0) {
       for (let i = 0; i <= valid_moves.length - 1; i++) {
-        console.log("move: ", valid_moves[i]);
         let move = valid_moves[i];
         let y = (move[1] + 1).toString();
         let x = letters[move[0]];
         let tag = x + y;
         tags.push(tag);
       }
-      console.log("Tags: ", tags);
     }
     return tags;
   };

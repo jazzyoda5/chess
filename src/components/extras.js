@@ -305,9 +305,8 @@ function check_if_castling(x, y, pawn_x, pawn_y, pawn, game_state) {
         }
       }
     }
-  } else {
-    return false;
   }
+  return false;
 }
 
 function castling_possible(x, y, pawn, game_state) {

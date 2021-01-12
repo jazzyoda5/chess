@@ -52,6 +52,6 @@ when it reaches the opposite end of the board
 
 Bugs:
 
-- checkingCheck type error
-- Making a move with another's pawn offline
-- Leaving rooms Bugs
+- checkmate online
+- Leaving rooms Bugs -> find new game after opponent
+leaves.
