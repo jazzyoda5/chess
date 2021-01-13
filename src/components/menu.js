@@ -16,6 +16,16 @@ function Menu(props) {
                     component={Link}
                     to={'/offline'}
                     >
+                        PLAY THE COMPUTER 
+                    </Button>
+                </li>
+                <li>
+                    <Button
+                    variant="contained"
+                    className="menu-but"
+                    component={Link}
+                    to={'/twoplayer-offline'}
+                    >
                         Offline 2-Player Game 
                     </Button>
                 </li>
@@ -26,7 +36,7 @@ function Menu(props) {
                     component={Link}
                     to={'/online'}
                     >
-                        ONLINE GAME
+                        FIND AN OPPONENT
                     </Button>
                 </li>
             </ul>

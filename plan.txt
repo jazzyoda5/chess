@@ -13,6 +13,11 @@ Black pawns = [
     bR, bK, bB, bQ, bK
 ]
 
+When playing against the computer, the front end will
+calculate all possible moves and socket that to the server.
+Then a python script will deteremine which move to make and coket that back.
+All that is left is to update the game_state.
+
 
 ---
 
@@ -51,7 +56,3 @@ when it reaches the opposite end of the board
 ---
 
 Bugs:
-
-- checkmate online
-- Leaving rooms Bugs -> find new game after opponent
-leaves.

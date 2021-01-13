@@ -16,7 +16,14 @@ function App(props) {
       <Router>
         <Switch>
           <Route path="/offline">
-            <OfflineBoard />
+            <OfflineBoard
+            mode={'1player'}
+            />
+          </Route>
+          <Route path="/twoplayer-offline">
+            <OfflineBoard 
+            mode={'2player'}
+            />
           </Route>
           <Route path="/online">
             <Board />

@@ -9,21 +9,24 @@ function check_if_valid_move(x, y, valid_moves) {
 
 function pawn_valid_moves(x, y, pawn, igame_state) {
   let valid_moves = [];
-
+  console.log('pawn game_state: ', igame_state);
   // White pawn
   if (pawn[0] === "w") {
+    // If pawn is in original position
     if (y === 6) {
       if (igame_state[y - 2][x] === "") {
         valid_moves.push([x, y - 2]);
       }
     }
-    if (igame_state[y - 1][x] === "") {
+    // one move ahead
+    if (y > 0 && igame_state[y - 1][x] === "") {
       valid_moves.push([x, y - 1]);
     }
-    if (x !== 0 && igame_state[y - 1][x - 1][0] === "b") {
+    // If there are pawns to eat
+    if (y > 0 && x !== 0 && igame_state[y - 1][x - 1][0] === "b") {
       valid_moves.push([x - 1, y - 1]);
     }
-    if (x !== 7 && igame_state[y - 1][x + 1][0] === "b") {
+    if (y > 0 && x !== 7 && igame_state[y - 1][x + 1][0] === "b") {
       valid_moves.push([x + 1, y - 1]);
     }
   } else if (pawn[0] === "b") {
@@ -32,13 +35,13 @@ function pawn_valid_moves(x, y, pawn, igame_state) {
         valid_moves.push([x, y + 2]);
       }
     }
-    if (igame_state[y + 1][x] === "") {
+    if (y < 7 && igame_state[y + 1][x] === "") {
       valid_moves.push([x, y + 1]);
     }
-    if (x !== 0 && igame_state[y + 1][x - 1][0] === "w") {
+    if (y < 7 && x !== 0 && igame_state[y + 1][x - 1][0] === "w") {
       valid_moves.push([x - 1, y + 1]);
     }
-    if (x !== 7 && igame_state[y + 1][x + 1][0] === "w") {
+    if (y < 7 && x !== 7 && igame_state[y + 1][x + 1][0] === "w") {
       valid_moves.push([x + 1, y + 1]);
     }
   }
@@ -326,7 +329,7 @@ function castling_possible(x, y, pawn, game_state) {
         return [2, 7];
       }
     }
-  } else if ((pawn === "bK")) {
+  } else if (pawn === "bK") {
     if (x === 4 && y === 0) {
       if (game_state[0][5] === "" && game_state[0][6] === "") {
         if (game_state[0][7] === "bR") {
@@ -381,6 +384,46 @@ const newGame = () => {
   return new_game;
 };
 
+function getComputerMoveData(
+  updated_game_state,
+  comp_color,
+  getValidMoves,
+  v_moves
+) {
+  // Get all possible moves and send them to the server
+  var data = [];
+
+  /*
+  all_moves = list of objects
+  has to contain pawn type and all possible moves for that pawn
+  */
+  for (let i = 0; i <= 7; i++) {
+    for (let j = 0; j <= 7; j++) {
+      let pawn1 = updated_game_state[i][j];
+      if (pawn1[0] === comp_color) {
+        // Valid moves first round
+        let vm1 = getValidMoves(j, i, pawn1, updated_game_state);
+        // After checking for bad moves
+        let vm2 = v_moves(updated_game_state, vm1, j, i, pawn1);
+        // vm2 contains all possible moves for this pawn.
+        // Now create the object and push it into data
+        // Each move is an object
+        if (vm2.length > 0) {
+          for (let x = 0; x <= vm2.length - 1; x++) {
+            let obj = {
+              pawn: pawn1,
+              move: vm2[x],
+              position: [j, i],
+            };
+            data.push(obj);
+          }
+        }
+      }
+    }
+  }
+  return data;
+}
+
 module.exports = {
   check_if_valid_move,
   pawn_valid_moves,
@@ -390,5 +433,6 @@ module.exports = {
   king_valid_moves,
   newGame,
   check_if_castling,
-  castling_possible
+  castling_possible,
+  getComputerMoveData
 };

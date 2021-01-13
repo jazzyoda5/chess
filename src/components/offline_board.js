@@ -1,14 +1,22 @@
 import "fontsource-roboto";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../static/style.css";
 import Square from "./square";
 import Panel from "./panel.js";
 import PawnDialog from "./choose_pawn";
+import ChooseColorDialog from './choose_color_dialog';
 import CheckmateDialog from "./checkmate_dialog";
+import { socket } from "../socket/socket";
 
 const extras = require("./extras.js");
 
 const letters = "abcdefgh";
+
+/*
+There will be two options:
+- To choose a 2-player offline game
+- To play against the computer
+*/
 
 function OfflineBoard(props) {
   const [clicked_square, set_clicked_square] = useState(null);
@@ -19,6 +27,16 @@ function OfflineBoard(props) {
   const [end_w, set_end_w] = useState(null);
   const [end_b, set_end_b] = useState(null);
   const [checkmate, set_checkmate] = useState(false);
+  const [comp_color, set_comp_color] = useState(null);
+  const [player_color, set_player_color] = useState(null);
+
+  useEffect(() => {
+    socket.on('computer-move', data => {
+      console.log('[SOCKET] Recieved a move from the server. -> ', data);
+      // Make a move
+      makeComputerMove(data);
+    })
+  }, []);
 
   const getRow = (num) => {
     let row = [];
@@ -172,6 +190,7 @@ function OfflineBoard(props) {
     if (pawn[0] === 'b') {
       color1 = 'w';
     }
+    console.log('updated_game_state: ', updated_game_state);
     if (checkCheck(
       updated_game_state,
       pawn[0]
@@ -180,7 +199,71 @@ function OfflineBoard(props) {
     } else {
       set_check(null);
     }
+
+    // If playing against the computer
+    if (props.mode === '1player' && !end_b && !end_w) {
+      const data = extras.getComputerMoveData(updated_game_state, comp_color, getValidMoves, v_moves);
+      // Emit the data to the server
+      socket.emit('computer-move', {
+        'data': data,
+        'game_state': updated_game_state,
+        'comp_color': comp_color,
+      });
+      console.log('data emitted', data);
+    }
   };
+
+  const makeComputerMove = (data) => {
+    let move_data = data['move'];
+    let pawn = move_data['pawn'];
+    let move = move_data['move'];
+    let x = move_data['position'][0];
+    let y = move_data['position'][1];
+    let local_game_state = data['game_state'];
+
+    const castling = extras.check_if_castling(
+      move[0],
+      move[1],
+      x,
+      y,
+      pawn,
+      game_state
+    );
+
+    if (castling !== false) {
+      handleCastling(castling, local_game_state, next_move[0].toLowerCase());
+      return;
+    }
+
+    // Check if it is a pawn that reached the end
+    // Of the board
+    if (pawn === "wP" && move[1] === 0) {
+      switchPawn(move[0], move[1], null, null, 'wQ');
+    }
+    else if (pawn === "bP" && move[1] === 7) {
+      switchPawn(move[0], move[1], null, null, 'bQ');
+    }
+
+    let color1 = 'b'
+    let color2 = 'Black'
+    if (pawn[0] === 'b') {
+      color1 = 'w';
+      color2 = 'White';
+    }
+
+    let updated_game_state = updateGameState(move[0], move[1], x, y, pawn, local_game_state);
+    set_game_state(updated_game_state);
+    set_next_move(color2);
+
+    if (checkCheck(
+      updated_game_state,
+      pawn[0]
+    )) {
+      handleCheck(color1, updated_game_state);
+    } else {
+      set_check(null);
+    }
+  }
 
   const handleCastling = (type, state, next_move) => {
     if (type === "wR") {
@@ -219,11 +302,10 @@ function OfflineBoard(props) {
     }
   };
 
+  // This function makes sure
+  // You can't put your self in check
   const v_moves = (state, moves, x, y, pawn) => {
     let v_moves = [];
-    
-    // To avoid being able to move black if it is white's turn
-    // and vice-versa
 
     // For every move in valid_moves check for check
     for (let i = 0; i <= moves.length - 1; i++) {
@@ -282,12 +364,24 @@ function OfflineBoard(props) {
     return valid_moves;
   };
 
-  const switchPawn = (x, y, pawn) => {
+  const switchPawn = (x, y, pawn_x, pawn_y, pawn, next_move1) => {
     let updated_game_state = JSON.parse(JSON.stringify(game_state));
     updated_game_state[y][x] = pawn;
     set_game_state(updated_game_state);
     set_end_b(null);
     set_end_w(null);
+
+    // After switching the pawn, make a computer move is mode is 1player
+    if (props.mode === '1player') {
+      const data = extras.getComputerMoveData(updated_game_state, comp_color, getValidMoves, v_moves);
+      // Emit the data to the server
+      socket.emit('computer-move', {
+        'data': data,
+        'game_state': updated_game_state,
+        'comp_color': comp_color,
+      });
+      console.log('data emitted', data);
+    }
   };
 
   const updateGameState = (
@@ -348,7 +442,11 @@ function OfflineBoard(props) {
     const mate = checkCheckmate(lg_state, color);
     
     if (mate) {
-      set_checkmate(mate);
+      let i = 'w';
+      if (mate === 'w') {
+        i = 'b';
+      }
+      set_checkmate(i);
     }
   };
 
@@ -380,6 +478,25 @@ function OfflineBoard(props) {
     }
     console.log('v_moves length: ', v_moves1.length);
     return false;
+  }
+
+  const handleColorChoice = (color) => {
+    set_player_color(color);
+    console.log('color: ', color);
+    if (color === 'White') {
+      set_comp_color('b');
+    } else {
+      set_comp_color('w');
+      // If computer if white make first move
+      const data = extras.getComputerMoveData(game_state, 'w', getValidMoves, v_moves);
+      // Emit the data to the server
+      socket.emit('computer-move', {
+        'data': data,
+        'game_state': game_state,
+        'comp_color': comp_color,
+      });
+      console.log('data emitted', data);
+    }
   }
 
   const handleExit = () => {
@@ -414,7 +531,15 @@ function OfflineBoard(props) {
           handleExit={handleExit}
         />
       ) : null}
+      {(props.mode === '1player' && !comp_color && !player_color) ? (
+        <ChooseColorDialog
+          open={true}
+          handleColorChoice={handleColorChoice}
+        />
+      ) : null}
       <Panel
+        mode={props.mode}
+        color={player_color}
         set_game_state={set_game_state}
         set_next_move={set_next_move}
         set_check={set_check}

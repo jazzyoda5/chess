@@ -22,7 +22,7 @@ function Panel(props) {
         New Game
       </Button> : null }
       <div className="next-move">
-        {(props.online === true)
+        {(props.online === true || props.mode === '1player')
         ? <Typography variant="subtitle1">Your color is | <strong>{props.color}</strong></Typography>
         : null
         }
