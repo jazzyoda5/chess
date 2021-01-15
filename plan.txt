@@ -56,3 +56,6 @@ when it reaches the opposite end of the board
 ---
 
 Bugs:
+
+- Delete rooms on 5min of inactivity to prevent Bugs
+- checkmate if only king is left

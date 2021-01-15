@@ -4,7 +4,7 @@ import "../static/style.css";
 import Square from "./square";
 import Panel from "./panel.js";
 import PawnDialog from "./choose_pawn";
-import ChooseColorDialog from './choose_color_dialog';
+import ChooseColorDialog from "./choose_color_dialog";
 import CheckmateDialog from "./checkmate_dialog";
 import { socket } from "../socket/socket";
 
@@ -31,12 +31,12 @@ function OfflineBoard(props) {
   const [player_color, set_player_color] = useState(null);
 
   useEffect(() => {
-    socket.on('computer-move', data => {
-      console.log('[SOCKET] Recieved a move from the server. -> ', data);
+    socket.on("computer-move", (data) => {
+      console.log("[SOCKET] Recieved a move from the server. -> ", data);
       // Make a move
       makeComputerMove(data);
-    })
-  }, []);
+    });
+  }, [comp_color]);
 
   const getRow = (num) => {
     let row = [];
@@ -72,198 +72,180 @@ function OfflineBoard(props) {
   };
 
   function handleClick(tag) {
-    // Make a copy of the game_state
-    const local_game_state = JSON.parse(JSON.stringify(game_state));
+    if (props.mode !== "1player" || next_move === player_color) {
+      // Make a copy of the game_state
+      const local_game_state = JSON.parse(JSON.stringify(game_state));
 
-    /*
+      /*
             - pawn is the value of previosly chosen square
             - value is the value of second chosen square!
             */
 
-    // coordinates of clicked square
-    const coor_x = letters.indexOf(tag[0]);
-    const coor_y = tag[1] - 1;
+      // coordinates of clicked square
+      const coor_x = letters.indexOf(tag[0]);
+      const coor_y = tag[1] - 1;
 
-    // Get pawn in the square that is clicked
-    const value = local_game_state[coor_y][coor_x];
+      // Get pawn in the square that is clicked
+      const value = local_game_state[coor_y][coor_x];
 
-    // Whose move it is
-    let next_move1 = next_move[0].toLowerCase();
+      // Whose move it is
+      let next_move1 = next_move[0].toLowerCase();
 
-    // If no pawn has been chosen in previou click, choose a pawn
-    if (clicked_square === null && value !== "" && value[0] === next_move1) {
-      // Set clicked_square in state
-      // Set valid next moves in state
-      const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-      set_clicked_square([coor_x, coor_y]);
-      set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
-    }
-
-    // If pawn was already previously chosen, make a move
-    else if (clicked_square !== null) {
-      // Get coor of previously chosen pawn
-      var pawn_x = clicked_square[0];
-      var pawn_y = clicked_square[1];
-
-      // Now get previously chosen pawn value
-      var pawn = local_game_state[pawn_y][pawn_x];
-
-      // !!! What to do depends on value on chosen square
-
-      // if chosen pawn and clicked pawn are same color
-      if (value[0] === pawn[0]) {
-        set_clicked_square([coor_x, coor_y]);
+      // If no pawn has been chosen in previou click, choose a pawn
+      if (clicked_square === null && value !== "" && value[0] === next_move1) {
+        // Set clicked_square in state
+        // Set valid next moves in state
         const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-        if (value[0] === next_move1) {
+        set_clicked_square([coor_x, coor_y]);
         set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
-        } else if (value[0] !== next_move) {
-          set_valid_moves([]);
-        }
-      } else {
-        // There is no pawn of the samo color on clicked square
-        // Try to make a move
-        if (
-          extras.check_if_valid_move(
-            coor_x,
-            coor_y,
-            valid_moves,
-            local_game_state
-          )
-        ) {
-          // Move is valid
+      }
 
-          // Castling is handled by a different method
-          // than making a move
-          const castling = extras.check_if_castling(
-            coor_x,
-            coor_y,
-            pawn_x,
-            pawn_y,
-            pawn,
-            local_game_state
-          );
+      // If pawn was already previously chosen, make a move
+      else if (clicked_square !== null) {
+        // Get coor of previously chosen pawn
+        var pawn_x = clicked_square[0];
+        var pawn_y = clicked_square[1];
 
-          if (castling !== false) {
-            handleCastling(castling, local_game_state, next_move1);
-            return;
-          }
+        // Now get previously chosen pawn value
+        var pawn = local_game_state[pawn_y][pawn_x];
 
-          // Check if it is a pawn that reached the end
-          // Of the board
-          if (pawn === "wP" && coor_y === 0) {
-            set_end_w([coor_x, coor_y, "wP"]);
-          }
-          if (pawn === "bP" && coor_y === 7) {
-            set_end_b([coor_x, coor_y, "bP"]);
-          }
+        // !!! What to do depends on value on chosen square
 
-          // figure out next move
-          if (next_move1 === "w") {
-            set_next_move("Black");
-          } else {
-            set_next_move("White");
-          }
-          makeMove(coor_x, coor_y, pawn_x, pawn_y, pawn, local_game_state);
-          // If move is not valid
-        } else {
-          console.log("else runs");
-          const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
-
+        // if chosen pawn and clicked pawn are same color
+        if (value[0] === pawn[0]) {
           set_clicked_square([coor_x, coor_y]);
+          const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
           if (value[0] === next_move1) {
-          set_valid_moves(v_moves(local_game_state, vm, coor_x, coor_y, value));
-          } else {
+            set_valid_moves(
+              v_moves(local_game_state, vm, coor_x, coor_y, value)
+            );
+          } else if (value[0] !== next_move) {
             set_valid_moves([]);
-          } 
+          }
+        } else {
+          // There is no pawn of the samo color on clicked square
+          // Try to make a move
+          if (
+            extras.check_if_valid_move(
+              coor_x,
+              coor_y,
+              valid_moves,
+              local_game_state
+            )
+          ) {
+            // Move is valid
+
+            // Castling is handled by a different method
+            // than making a move
+            const castling = extras.check_if_castling(
+              coor_x,
+              coor_y,
+              pawn_x,
+              pawn_y,
+              pawn,
+              local_game_state
+            );
+
+            if (castling !== false) {
+              handleCastling(castling, local_game_state, next_move1);
+              return;
+            }
+
+            // Check if it is a pawn that reached the end
+            // Of the board
+            if (pawn === "wP" && coor_y === 0) {
+              set_end_w([coor_x, coor_y, "wP"]);
+            }
+            if (pawn === "bP" && coor_y === 7) {
+              set_end_b([coor_x, coor_y, "bP"]);
+            }
+
+            // figure out next move
+            if (next_move1 === "w") {
+              set_next_move("Black");
+            } else {
+              set_next_move("White");
+            }
+            makeMove(coor_x, coor_y, pawn_x, pawn_y, pawn, local_game_state);
+            // If move is not valid
+          } else {
+            console.log("else runs");
+            const vm = getValidMoves(coor_x, coor_y, value, local_game_state);
+
+            set_clicked_square([coor_x, coor_y]);
+            if (value[0] === next_move1) {
+              set_valid_moves(
+                v_moves(local_game_state, vm, coor_x, coor_y, value)
+              );
+            } else {
+              set_valid_moves([]);
+            }
+          }
         }
       }
     }
   }
 
   const makeMove = (x, y, pawn_x, pawn_y, pawn, local_game_state) => {
-    const updated_game_state = updateGameState(x, y, pawn_x, pawn_y, pawn, local_game_state);
+    const updated_game_state = updateGameState(
+      x,
+      y,
+      pawn_x,
+      pawn_y,
+      pawn,
+      local_game_state
+    );
     set_game_state(updated_game_state);
     set_clicked_square(null);
     set_valid_moves([]);
     // Check for check after making a move
-    let color1 = 'b'
-    if (pawn[0] === 'b') {
-      color1 = 'w';
+    let color1 = "b";
+    if (pawn[0] === "b") {
+      color1 = "w";
     }
-    console.log('updated_game_state: ', updated_game_state);
-    if (checkCheck(
-      updated_game_state,
-      pawn[0]
-    )) {
+    console.log("updated_game_state: ", updated_game_state);
+    if (checkCheck(updated_game_state, pawn[0])) {
       handleCheck(color1, updated_game_state);
     } else {
       set_check(null);
     }
 
     // If playing against the computer
-    if (props.mode === '1player' && !end_b && !end_w) {
-      const data = extras.getComputerMoveData(updated_game_state, comp_color, getValidMoves, v_moves);
+    if (props.mode === "1player" && !end_b && !end_w && !checkmate) {
+      const data = extras.getComputerMoveData(
+        updated_game_state,
+        comp_color,
+        getValidMoves,
+        v_moves
+      );
       // Emit the data to the server
-      socket.emit('computer-move', {
-        'data': data,
-        'game_state': updated_game_state,
-        'comp_color': comp_color,
+      socket.emit("computer-move", {
+        game_state: updated_game_state,
+        comp_color: comp_color,
       });
-      console.log('data emitted', data);
+      console.log("data emitted", data);
     }
   };
 
   const makeComputerMove = (data) => {
-    let move_data = data['move'];
-    let pawn = move_data['pawn'];
-    let move = move_data['move'];
-    let x = move_data['position'][0];
-    let y = move_data['position'][1];
-    let local_game_state = data['game_state'];
-
-    const castling = extras.check_if_castling(
-      move[0],
-      move[1],
-      x,
-      y,
-      pawn,
-      game_state
-    );
-
-    if (castling !== false) {
-      handleCastling(castling, local_game_state, next_move[0].toLowerCase());
-      return;
+    let local_game_state = data["game_state"];
+    console.log("comp_color: ", comp_color);
+    let color1 = "b";
+    let color2 = "Black";
+    if (comp_color === "b") {
+      color1 = "w";
+      color2 = "White";
     }
 
-    // Check if it is a pawn that reached the end
-    // Of the board
-    if (pawn === "wP" && move[1] === 0) {
-      switchPawn(move[0], move[1], null, null, 'wQ');
-    }
-    else if (pawn === "bP" && move[1] === 7) {
-      switchPawn(move[0], move[1], null, null, 'bQ');
-    }
-
-    let color1 = 'b'
-    let color2 = 'Black'
-    if (pawn[0] === 'b') {
-      color1 = 'w';
-      color2 = 'White';
-    }
-
-    let updated_game_state = updateGameState(move[0], move[1], x, y, pawn, local_game_state);
-    set_game_state(updated_game_state);
+    set_game_state(local_game_state);
     set_next_move(color2);
 
-    if (checkCheck(
-      updated_game_state,
-      pawn[0]
-    )) {
-      handleCheck(color1, updated_game_state);
+    if (checkCheck(local_game_state, comp_color)) {
+      handleCheck(color1, local_game_state);
     } else {
       set_check(null);
     }
-  }
+  };
 
   const handleCastling = (type, state, next_move) => {
     if (type === "wR") {
@@ -325,7 +307,13 @@ function OfflineBoard(props) {
     return v_moves;
   };
 
-  const getValidMoves = (x, y, pawn, local_game_state, checking_check=false) => {
+  const getValidMoves = (
+    x,
+    y,
+    pawn,
+    local_game_state,
+    checking_check = false
+  ) => {
     let valid_moves = [];
 
     if (pawn[1] === "P") {
@@ -348,7 +336,6 @@ function OfflineBoard(props) {
         console.log("add_castling_move");
         valid_moves.push(c_move);
       }
-
     } else if (pawn[1] === "B") {
       valid_moves = extras.get_bishop_moves(x, y, pawn, local_game_state);
     }
@@ -372,15 +359,20 @@ function OfflineBoard(props) {
     set_end_w(null);
 
     // After switching the pawn, make a computer move is mode is 1player
-    if (props.mode === '1player') {
-      const data = extras.getComputerMoveData(updated_game_state, comp_color, getValidMoves, v_moves);
+    if (props.mode === "1player") {
+      const data = extras.getComputerMoveData(
+        updated_game_state,
+        comp_color,
+        getValidMoves,
+        v_moves
+      );
       // Emit the data to the server
-      socket.emit('computer-move', {
-        'data': data,
-        'game_state': updated_game_state,
-        'comp_color': comp_color,
+      socket.emit("computer-move", {
+        data: data,
+        game_state: updated_game_state,
+        comp_color: comp_color,
       });
-      console.log('data emitted', data);
+      console.log("data emitted", data);
     }
   };
 
@@ -408,7 +400,8 @@ function OfflineBoard(props) {
           // When doing this don't check for castling move
           let valid_moves1 = getValidMoves(j, i, pawn, igame_state, true);
           for (let k = 0; k <= valid_moves1.length - 1; k++) {
-            let pawn_on_pos = igame_state[valid_moves1[k][1]][valid_moves1[k][0]];
+            let pawn_on_pos =
+              igame_state[valid_moves1[k][1]][valid_moves1[k][0]];
             if (pawn_on_pos[1] === "K" && pawn_on_pos.length === 2) {
               return true;
             }
@@ -440,11 +433,11 @@ function OfflineBoard(props) {
 
     // Check if it checkmate
     const mate = checkCheckmate(lg_state, color);
-    
+
     if (mate) {
-      let i = 'w';
-      if (mate === 'w') {
-        i = 'b';
+      let i = "w";
+      if (mate === "w") {
+        i = "b";
       }
       set_checkmate(i);
     }
@@ -455,7 +448,7 @@ function OfflineBoard(props) {
     // Get all possible moves and if there are no possible moves
     // It is checkmate
     let v_moves1 = [];
-    console.log('checkmate state: ', state);
+    console.log("checkmate state: ", state);
 
     for (let i = 0; i <= 7; i++) {
       for (let j = 0; j <= 7; j++) {
@@ -469,35 +462,39 @@ function OfflineBoard(props) {
               v_moves1.push(moves[x]);
             }
           }
-        } 
+        }
       }
     }
     if (v_moves1.length < 1) {
-      console.log('possible moves: ', v_moves1);
+      console.log("possible moves: ", v_moves1);
       return color;
     }
-    console.log('v_moves length: ', v_moves1.length);
+    console.log("v_moves length: ", v_moves1.length);
     return false;
-  }
+  };
 
   const handleColorChoice = (color) => {
     set_player_color(color);
-    console.log('color: ', color);
-    if (color === 'White') {
-      set_comp_color('b');
+    console.log("color: ", color);
+    if (color === "White") {
+      set_comp_color("b");
     } else {
-      set_comp_color('w');
+      set_comp_color("w");
       // If computer if white make first move
-      const data = extras.getComputerMoveData(game_state, 'w', getValidMoves, v_moves);
+      const data = extras.getComputerMoveData(
+        game_state,
+        "w",
+        getValidMoves,
+        v_moves
+      );
       // Emit the data to the server
-      socket.emit('computer-move', {
-        'data': data,
-        'game_state': game_state,
-        'comp_color': comp_color,
+      socket.emit("computer-move", {
+        game_state: game_state,
+        comp_color: "w",
       });
-      console.log('data emitted', data);
+      console.log("data emitted", data);
     }
-  }
+  };
 
   const handleExit = () => {
     void 0;
@@ -524,18 +521,15 @@ function OfflineBoard(props) {
           data={end_b}
         />
       ) : null}
-      {(checkmate !== false) ? (
+      {checkmate !== false ? (
         <CheckmateDialog
           open={true}
           winner={checkmate}
           handleExit={handleExit}
         />
       ) : null}
-      {(props.mode === '1player' && !comp_color && !player_color) ? (
-        <ChooseColorDialog
-          open={true}
-          handleColorChoice={handleColorChoice}
-        />
+      {props.mode === "1player" && !comp_color && !player_color ? (
+        <ChooseColorDialog open={true} handleColorChoice={handleColorChoice} />
       ) : null}
       <Panel
         mode={props.mode}
@@ -543,6 +537,8 @@ function OfflineBoard(props) {
         set_game_state={set_game_state}
         set_next_move={set_next_move}
         set_check={set_check}
+        set_comp_color={set_comp_color}
+        set_player_color={set_player_color}
         handleExit={handleExit}
         next_move={next_move}
         online={false}

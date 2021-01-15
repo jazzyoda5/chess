@@ -16,6 +16,8 @@ function Panel(props) {
           props.set_game_state(extras.newGame());
           props.set_next_move("White");
           props.set_check(null);
+          props.set_player_color(null);
+          props.set_comp_color(null);
         }}
         className="panel-but"
       >
