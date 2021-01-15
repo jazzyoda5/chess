@@ -36,7 +36,7 @@ function OfflineBoard(props) {
       // Make a move
       makeComputerMove(data);
     });
-  }, [comp_color]);
+  }, [comp_color,]);
 
   const getRow = (num) => {
     let row = [];
@@ -206,12 +206,13 @@ function OfflineBoard(props) {
     console.log("updated_game_state: ", updated_game_state);
     if (checkCheck(updated_game_state, pawn[0])) {
       handleCheck(color1, updated_game_state);
+      var lcheck = true;
     } else {
       set_check(null);
     }
 
     // If playing against the computer
-    if (props.mode === "1player" && !end_b && !end_w && !checkmate) {
+    if (props.mode === "1player" && !end_b && !end_w && !lcheck) {
       const data = extras.getComputerMoveData(
         updated_game_state,
         comp_color,

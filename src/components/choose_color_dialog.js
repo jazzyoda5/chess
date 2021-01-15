@@ -2,7 +2,6 @@ import React from "react";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Dialog from "@material-ui/core/Dialog";
 import { DialogContent, Button } from "@material-ui/core";
-import { Link } from "react-router-dom";
 
 export default function ChooseColorDialog(props) {
   const { open, handleColorChoice } = props;
