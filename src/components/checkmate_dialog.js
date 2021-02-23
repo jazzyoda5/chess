@@ -4,6 +4,7 @@ import Dialog from "@material-ui/core/Dialog";
 import { DialogContent, Button } from "@material-ui/core";
 import { Link } from "react-router-dom";
 
+// Dialog that opens on checkmate
 export default function CheckmateDialog(props) {
   const { open, winner, handleExit } = props;
 

@@ -32,11 +32,15 @@ function OfflineBoard(props) {
 
   useEffect(() => {
     socket.on("computer-move", (data) => {
-      console.log("[SOCKET] Recieved a move from the server. -> ", data);
+      console.log("[SOCKET] Recieved a move from the server.");
       // Make a move
-      makeComputerMove(data);
+      if (data) {
+        makeComputerMove(data);
+      } else {
+        console.log('[SOCKET] Data recieved is not valid.');
+      }
     });
-  }, [comp_color,]);
+  }, [comp_color]);
 
   const getRow = (num) => {
     let row = [];
@@ -203,48 +207,40 @@ function OfflineBoard(props) {
     if (pawn[0] === "b") {
       color1 = "w";
     }
-    console.log("updated_game_state: ", updated_game_state);
     if (checkCheck(updated_game_state, pawn[0])) {
       handleCheck(color1, updated_game_state);
-      var lcheck = true;
     } else {
       set_check(null);
     }
 
     // If playing against the computer
-    if (props.mode === "1player" && !end_b && !end_w && !lcheck) {
-      const data = extras.getComputerMoveData(
-        updated_game_state,
-        comp_color,
-        getValidMoves,
-        v_moves
-      );
+    if (props.mode === "1player" && !end_b && !end_w) {
       // Emit the data to the server
       socket.emit("computer-move", {
         game_state: updated_game_state,
         comp_color: comp_color,
       });
-      console.log("data emitted", data);
     }
   };
 
   const makeComputerMove = (data) => {
-    let local_game_state = data["game_state"];
-    console.log("comp_color: ", comp_color);
-    let color1 = "b";
-    let color2 = "Black";
-    if (comp_color === "b") {
-      color1 = "w";
-      color2 = "White";
-    }
+    if (!checkmate) {
+      let local_game_state = data["game_state"];
+      let color1 = "b";
+      let color2 = "Black";
+      if (comp_color === "b") {
+        color1 = "w";
+        color2 = "White";
+      }
 
-    set_game_state(local_game_state);
-    set_next_move(color2);
+      set_game_state(local_game_state);
+      set_next_move(color2);
 
-    if (checkCheck(local_game_state, comp_color)) {
-      handleCheck(color1, local_game_state);
-    } else {
-      set_check(null);
+      if (checkCheck(local_game_state, comp_color)) {
+        handleCheck(color1, local_game_state);
+      } else {
+        set_check(null);
+      }
     }
   };
 
@@ -449,8 +445,6 @@ function OfflineBoard(props) {
     // Get all possible moves and if there are no possible moves
     // It is checkmate
     let v_moves1 = [];
-    console.log("checkmate state: ", state);
-
     for (let i = 0; i <= 7; i++) {
       for (let j = 0; j <= 7; j++) {
         let pawn = state[i][j];

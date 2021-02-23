@@ -22,6 +22,7 @@ const extras = require("./extras.js");
 
 const letters = "abcdefgh";
 
+// Multiplayer game
 function Board(props) {
   const [clicked_square, set_clicked_square] = useState(null);
   const [game_state, set_game_state] = useState(extras.newGame());

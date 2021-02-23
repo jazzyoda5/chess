@@ -1,4 +1,17 @@
-Web Chess game
+Online Multiplayer Chess Game
+
+This is the React - client-side - portion of the code
+Server-side code is here -> https://github.com/jazzyoda5/chess-server
+---
+
+ - An online Chess game that has a Singleplayer and a Multiplayer mode.
+ - Chess logic is implemented on the frontend.
+ - A chess engine that uses the Minimax algorithm to determine which move to make is 
+ implemented on the backend in Python.
+ - It uses flask_socketio library to transmit moves between opponents.
+
+---
+PLAN
 
 Board will be a separate component
 Each square on the board will be a separate component
@@ -56,6 +69,3 @@ when it reaches the opposite end of the board
 ---
 
 Bugs:
-
-- Delete rooms on 5min of inactivity to prevent Bugs
-- checkmate if only king is left

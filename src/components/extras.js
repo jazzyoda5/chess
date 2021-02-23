@@ -1,3 +1,14 @@
+/*
+#########################################
+#########################################
+This file contains functions that are used 
+to implement the rules of a chess game as well
+as helper functions for actions like castling etc.
+#########################################
+#########################################
+*/
+
+
 function check_if_valid_move(x, y, valid_moves) {
   for (let i = 0; i <= valid_moves.length - 1; i++) {
     if (valid_moves[i][0] === x && valid_moves[i][1] === y) {
@@ -9,7 +20,6 @@ function check_if_valid_move(x, y, valid_moves) {
 
 function pawn_valid_moves(x, y, pawn, igame_state) {
   let valid_moves = [];
-  console.log('pawn game_state: ', igame_state);
   // White pawn
   if (pawn[0] === "w") {
     // If pawn is in original position
