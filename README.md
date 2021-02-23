@@ -20,10 +20,10 @@ Board is 8x8, left white rook is a1 and is on a
 dark square.
 
 White pawns = [
-    wR, wK, wB, wQ, wK
+    wR, wK, wB, wQ, wKn
 ]
 Black pawns = [
-    bR, bK, bB, bQ, bK
+    bR, bK, bB, bQ, bKn
 ]
 
 When playing against the computer, the front end will
