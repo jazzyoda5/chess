@@ -1,4 +1,5 @@
 import "./App.css";
+import { useState } from 'react';
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Board from "./components/board.js";
 import Menu from "./components/menu.js";
@@ -7,7 +8,9 @@ import "fontsource-roboto";
 import Typography from '@material-ui/core/Typography';
 
 function App(props) {
-  console.log(process.env);
+  const [isLoggedin, setIsLoggedin] = useState(false);
+  const [username, setUsername] = useState(null);
+
   return (
     <div className="App">
       <Typography variant="h2" component="h2" gutterBottom>
@@ -29,7 +32,7 @@ function App(props) {
             <Board />
           </Route>
           <Route path="/">
-            <Menu />
+            <Menu isLoggedin={isLoggedin}/>
           </Route>
         </Switch>
       </Router>
