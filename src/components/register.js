@@ -7,6 +7,7 @@ import Fade from "@material-ui/core/Fade";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
 
 const useStyles = makeStyles((theme) => ({
   modal: {
@@ -44,9 +45,11 @@ export default function RegisterModal(props) {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState(null);
 
   const handleRegister = async () => {
     if (passwordInput !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -68,10 +71,12 @@ export default function RegisterModal(props) {
       console.log("res.data: ", res.data);
 
       if (res.data.success) {
-        console.log("success");
+        props.setIsLoggedin(true);
+        props.setUsername(usernameInput);
         props.handleCloseRegister();
-      } else {
-        console.log("fail");
+      } 
+      else if (res.data.error) {
+        setError(res.data.error);
       }
     } catch (err) {
       console.log("login error: ".err);
@@ -109,9 +114,10 @@ export default function RegisterModal(props) {
               />
               <TextField
                 className={classes.textField}
-                id="filled-basic"
+                id="password"
                 label="Password"
                 variant="filled"
+                type="password"
                 InputProps={{ className: classes.input }}
                 InputLabelProps={{
                   style: { color: "rgb(225, 226, 230)" },
@@ -122,9 +128,10 @@ export default function RegisterModal(props) {
               />
               <TextField
                 className={classes.textField}
-                id="filled-basic"
+                id="confirm-password"
                 label="Confirm Password"
                 variant="filled"
+                type="password"
                 InputProps={{ className: classes.input }}
                 InputLabelProps={{
                   style: { color: "rgb(225, 226, 230)" },
@@ -133,6 +140,11 @@ export default function RegisterModal(props) {
                   setConfirmPassword(event.target.value);
                 }}
               />
+              {(error) ?
+              <Typography variant='h5' style={{ color: '#eb5534', paddingBottom: '1rem' }}>
+                { error }
+              </Typography> : null
+              }
               <Button
                 variant="contained"
                 className={classes.button}

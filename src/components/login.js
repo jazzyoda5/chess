@@ -7,6 +7,7 @@ import Fade from "@material-ui/core/Fade";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
+import { Typography } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   modal: {
@@ -43,8 +44,14 @@ export default function LoginModal(props) {
   const classes = useStyles();
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [error, setError] = useState(null);
 
   const handleLogin = async () => {
+    if (usernameInput === "" || passwordInput === "") {
+      setError('Please fill out the form');
+      return;
+    }
+
     const config = {
       headers: {
         Accept: "application/json",
@@ -63,13 +70,15 @@ export default function LoginModal(props) {
       console.log("res.data: ", res.data);
 
       if (res.data.success) {
-        console.log("success");
+        props.setIsLoggedin(true);
+        props.setUsername(usernameInput);
         props.handleCloseLogin();
-      } else {
-        console.log("fail");
+      } 
+      else if (res.data.error) {
+        setError(res.data.error);
       }
     } catch (err) {
-      console.log("login error: ".err);
+      console.log(err);
     }
   };
 
@@ -115,6 +124,11 @@ export default function LoginModal(props) {
                   setPasswordInput(event.target.value);
                 }}
               />
+              {(error) ?
+              <Typography variant='h5' style={{ color: '#eb5534', paddingBottom: '1rem' }}>
+                { error }
+              </Typography> : null
+              }
               <Button
                 variant="contained"
                 className={classes.button}

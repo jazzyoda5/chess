@@ -33,6 +33,7 @@ function Board(props) {
   const [color, set_color] = useState(null);
   // Opponent -> 0 == false, 1 == true, 2 == opponent left
   const [opponent, set_opponent] = useState(0);
+  const [opponent_name, set_opponent_name] = useState(null);
   // Dialog for if opponent leaves
   const [open, setOpen] = useState(false);
   // end_w and end_b tell the board if a pawn has reached the end
@@ -725,6 +726,7 @@ function Board(props) {
           color={color}
           next_move={next_move}
           online={true}
+          opponent_name={opponent_name}
         />
         <div className="board">
           <div className="squares">

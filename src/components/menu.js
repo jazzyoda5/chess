@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from 'axios';
 import "../static/menu.css";
 import RegisterModal from "./register";
 import LoginModal from "./login";
@@ -26,22 +27,54 @@ function Menu(props) {
     setOpenLogin(false);
   };
 
+  const handleLogout = async () => {
+    const config = {
+      headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+      }
+    };
+
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API}/api/logout`, config);
+
+      if (res.data.success) {
+          props.setIsLoggedin(false);
+          props.setUsername(null);
+      }
+    } catch (err) {
+        console.log(err);
+    
+
+
+
+    }
+  }
+
   return (
     <div className="main-menu">
+      {props.isLoggedin && props.username ? (
+        <Typography variant="h4" component="h4" gutterBottom style={{
+          backgroundColor: 'rgb(50, 50, 50)',
+          margin: '1rem',
+          padding: '1rem',
+          borderRadius: '6px',
+          borderRadius: "6px",
+          borderColor: "rgb(100, 100, 100)",
+          borderStyle: "solid",
+          borderWidth: "1px",
+        }}>
+          Welcome, {props.username}
+        </Typography>
+      ) : null}
       <ul>
-        <li>
-          <Typography variant="h5" style={{ paddingBottom: "1rem" }}>
-            Online
-          </Typography>
-        </li>
-
         {props.isLoggedin === false ? (
           <div>
             <li>
               <Button
                 variant="contained"
                 onClick={() => handleOpenRegister()}
-                style={{ backgroundColor: "white" }}
+                style={{ backgroundColor: "rgb(200, 200, 200)", width: '100%', maxWidth: '250px' }}
               >
                 Create an Account
               </Button>
@@ -50,7 +83,7 @@ function Menu(props) {
               <Button
                 variant="contained"
                 onClick={() => handleOpenLogin()}
-                style={{ backgroundColor: "white" }}
+                style={{ backgroundColor: "rgb(200, 200, 200)", width: '100%', maxWidth: '250px' }}
               >
                 Login
               </Button>
@@ -58,13 +91,44 @@ function Menu(props) {
           </div>
         ) : (
           <li>
-            <Button variant="contained" style={{ backgroundColor: "white" }}>
+            <Button
+              variant="contained"
+              style={{ backgroundColor: "rgb(200, 200, 200)", width: '100%', maxWidth: '250px' }}
+              onClick={() => handleLogout()}
+            >
               Logout
             </Button>
           </li>
         )}
-
         <li>
+          <Button
+            variant="contained"
+            className="menu-but"
+            component={Link}
+            to={"/offline"}
+          >
+            PLAY THE COMPUTER
+          </Button>
+        </li>
+        <li>
+          <Button
+            variant="contained"
+            className="menu-but"
+            component={Link}
+            to={"/twoplayer-offline"}
+            style={{ marginBottom: '1rem' }}
+          >
+            Offline 2-Player Game
+          </Button>
+        </li>
+        <li>
+          <hr style={{ borderColor: 'rgb(130, 130, 130)', width: '90%' }}></hr>
+        </li>
+        
+        <li>
+        <Typography variant="body1" style={{ paddingBottom: "0.5rem" }}>
+            Login Required
+          </Typography>
           <Button
             variant="contained"
             className="menu-but"
@@ -84,35 +148,23 @@ function Menu(props) {
             LEADERBOARD
           </Button>
         </li>
-        <li>
-          <Typography variant="h5" style={{ padding: "1rem" }}>
-            Offline
-          </Typography>
-          <Button
-            variant="contained"
-            className="menu-but"
-            component={Link}
-            to={"/offline"}
-          >
-            PLAY THE COMPUTER
-          </Button>
-        </li>
-        <li>
-          <Button
-            variant="contained"
-            className="menu-but"
-            component={Link}
-            to={"/twoplayer-offline"}
-          >
-            Offline 2-Player Game
-          </Button>
-        </li>
       </ul>
       <RegisterModal
         openRegister={openRegister}
         handleCloseRegister={handleCloseRegister}
+        isLoggedin={props.isLoggedin}
+        setIsLoggedin={props.setIsLoggedin}
+        username={props.username}
+        setUsername={props.setUsername}
       />
-      <LoginModal openLogin={openLogin} handleCloseLogin={handleCloseLogin} />
+      <LoginModal
+        openLogin={openLogin}
+        handleCloseLogin={handleCloseLogin}
+        isLoggedin={props.isLoggedin}
+        setIsLoggedin={props.setIsLoggedin}
+        username={props.username}
+        setUsername={props.setUsername}
+      />
     </div>
   );
 }

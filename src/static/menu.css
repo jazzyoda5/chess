@@ -21,4 +21,6 @@
 .menu-but {
     background-color: rgb(48, 48, 48) !important;
     color: white !important;
+    width: 100%;
+    max-width: 250px;
 }

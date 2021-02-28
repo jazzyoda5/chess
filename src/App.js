@@ -1,11 +1,12 @@
 import "./App.css";
-import { useState } from 'react';
+import { useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Board from "./components/board.js";
 import Menu from "./components/menu.js";
-import OfflineBoard from './components/offline_board.js'
+import OfflineBoard from "./components/offline_board.js";
+import PrivateRoute from "./components/private_route";
 import "fontsource-roboto";
-import Typography from '@material-ui/core/Typography';
+import Typography from "@material-ui/core/Typography";
 
 function App(props) {
   const [isLoggedin, setIsLoggedin] = useState(false);
@@ -19,20 +20,25 @@ function App(props) {
       <Router>
         <Switch>
           <Route path="/offline">
-            <OfflineBoard
-            mode={'1player'}
-            />
+            <OfflineBoard mode={"1player"} />
           </Route>
           <Route path="/twoplayer-offline">
-            <OfflineBoard 
-            mode={'2player'}
-            />
+            <OfflineBoard mode={"2player"} />
           </Route>
-          <Route path="/online">
-            <Board />
-          </Route>
+          <PrivateRoute
+            exact
+            path="/online"
+            component={Board}
+            isLoggedin={isLoggedin}
+            username={username}
+          />
           <Route path="/">
-            <Menu isLoggedin={isLoggedin}/>
+            <Menu
+              isLoggedin={isLoggedin}
+              setIsLoggedin={setIsLoggedin}
+              username={username}
+              setUsername={setUsername}
+            />
           </Route>
         </Switch>
       </Router>
