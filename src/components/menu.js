@@ -3,6 +3,7 @@ import axios from 'axios';
 import "../static/menu.css";
 import RegisterModal from "./register";
 import LoginModal from "./login";
+import LeaderboardModal from "./leaderboard";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ import { Link } from "react-router-dom";
 function Menu(props) {
   const [openRegister, setOpenRegister] = useState(false);
   const [openLogin, setOpenLogin] = useState(false);
+  const [openLeaderboard, setOpenLeaderboard] = useState(false);
 
   const handleOpenRegister = () => {
     setOpenRegister(true);
@@ -25,6 +27,14 @@ function Menu(props) {
 
   const handleCloseLogin = () => {
     setOpenLogin(false);
+  };
+
+  const handleOpenLb = () => {
+    setOpenLeaderboard(true);
+  };
+
+  const handleCloseLb = () => {
+    setOpenLeaderboard(false);
   };
 
   const handleLogout = async () => {
@@ -136,16 +146,6 @@ function Menu(props) {
             to={"/online"}
           >
             FIND AN OPPONENT
-          </Button>
-        </li>
-        <li>
-          <Button
-            variant="contained"
-            className="menu-but"
-            component={Link}
-            to={"/leaderboard"}
-          >
-            LEADERBOARD
           </Button>
         </li>
       </ul>
