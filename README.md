@@ -10,6 +10,8 @@ Server-side code is here -> https://github.com/jazzyoda5/chess-server
  implemented on the backend in Python.
  - It uses flask_socketio library to transmit moves between opponents.
 
+![Alt text](./src/static/imgs/Screenshot 2021-03-01 at 23.32.31.png)
+
 ---
 PLAN
 

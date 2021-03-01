@@ -1,7 +1,7 @@
 .main-menu {
     width: 80%;
     max-width: 700px;
-    background-color: rgb(68, 68, 68);
+    background-color: rgb(29, 29, 29);
     border-style: solid;
     border-width: 1px;
     border-color: rgb(121, 121, 121);
@@ -23,4 +23,12 @@
     color: white !important;
     width: 100%;
     max-width: 250px;
+}
+.logged-in-panel {
+    display: flex;
+    justify-content: space-around;
+    padding-inline: 2rem;
+    padding-block: 1rem;
+    margin: 1rem;
+    border-radius: 8px;
 }

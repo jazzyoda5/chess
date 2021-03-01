@@ -33,7 +33,7 @@ function Board(props) {
   const [color, set_color] = useState(null);
   // Opponent -> 0 == false, 1 == true, 2 == opponent left
   const [opponent, set_opponent] = useState(0);
-  const [opponent_name, set_opponent_name] = useState(null);
+  const [opp_username, set_opp_username] = useState(null);
   // Dialog for if opponent leaves
   const [open, setOpen] = useState(false);
   // end_w and end_b tell the board if a pawn has reached the end
@@ -55,7 +55,7 @@ function Board(props) {
     _set_room_id(data);
   };
 
-  // Run only once to join the game
+  // Run only once when the component mounts
   useEffect(() => {
     console.log("[SOCKET] Joining a game.");
     socket.emit("join");
@@ -79,6 +79,13 @@ function Board(props) {
     // Game can begin
     socket.on("full-room", () => {
       set_opponent(1);
+    });
+
+    socket.on("exchange_info", (data) => {
+      let username = data['opp_username'];
+      if (username !== props.username) {
+        set_opp_username(data['opp_username']);
+      }
     });
 
     socket.on("move", (data) => {
@@ -107,6 +114,16 @@ function Board(props) {
       set_checkmate(data['checkmate']);
     })
   }, []);
+
+  useEffect(() => {
+    if (opponent && !opp_username) {
+      console.log(props.username);
+      socket.emit("exchange_info", {
+        'opp_username': props.username,
+        'room_id': room_id
+      });
+    }
+  }, [opponent, room_id, props.username, checkmate]);
 
   const getRow = (num) => {
     let row = [];
@@ -466,6 +483,11 @@ function Board(props) {
     return false;
   };
 
+  /*
+  If there is checkmate, the function
+  returns the color of the winner
+  If not, it returns false
+  */
   const checkCheckmate = (state, color) => {
     console.log('checkmate state: ', state);
 
@@ -524,9 +546,22 @@ function Board(props) {
       socket.emit('checkmate', {
         'game_state': lg_state,
         'checkmate': mate,
-        'room_id': room_id
+        'room_id': room_id,
       });
-      // Emit checkmate
+      
+      if (color === mate[0].toLowerCase()) {
+        var looser = props.username;
+        var winner = opp_username;
+      } else {
+        looser = opp_username;
+        winner = props.username;
+      }
+      // Tell the server the results of the game to be stored in db
+      socket.emit('game_result', {
+        'draw': false,
+        'winner': winner,
+        'looser': looser
+      })
     }
   };
 
@@ -726,7 +761,7 @@ function Board(props) {
           color={color}
           next_move={next_move}
           online={true}
-          opponent_name={opponent_name}
+          opp_username={opp_username}
         />
         <div className="board">
           <div className="squares">
