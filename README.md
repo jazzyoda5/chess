@@ -11,6 +11,7 @@ Server-side code is here -> https://github.com/jazzyoda5/chess-server
  - It uses flask_socketio library to transmit moves between opponents.
 
 ![Screenshot](https://github.com/jazzyoda5/chess-client/blob/master/src/static/imgs/Screenshot%202021-03-01%20at%2023.32.31.png?raw=true)
+![Screenshot](https://github.com/jazzyoda5/chess-client/blob/master/src/static/imgs/Screenshot%202021-03-01%20at%2023.33.43.png?raw=true)
 
 ---
 PLAN
