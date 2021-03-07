@@ -1,5 +1,9 @@
 Online Multiplayer Chess Game
 
+Demo: http://142.93.131.222:5000/
+ - username: test
+ - password: test
+
 This is the React - client-side - portion of the code
 Server-side code is here -> https://github.com/jazzyoda5/chess-server
 ---
