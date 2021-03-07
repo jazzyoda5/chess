@@ -1,6 +1,6 @@
 Online Multiplayer Chess Game
 
-Demo: http://142.93.131.222:5000/
+Demo: http://www.coolchess.xyz/
  - username: test
  - password: test
 
